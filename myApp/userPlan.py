@@ -34,6 +34,7 @@ class watchAllProject(View):
     def post(self, request):
         response = {'errcode': 1, 'message': "404 not success"}
         userProjectRepo = UserProject.objects.filter(user_id=request.user)
+        print(userProjectRepo)
         projectList = []
         for i in userProjectRepo:
             projectList.append({

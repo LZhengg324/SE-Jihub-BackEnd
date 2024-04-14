@@ -108,10 +108,10 @@ class GetBindRepos(View):
         repoId = userProjectRepo.repo_id.id
         repo = Repo.objects.get(id=repoId)
         
-        os.system("gh repo view " + repo.remote_path + " | grep description > " + os.path.join(USER_REPOS_DIR, descLogName))
+        os.system("gh repo view \"" + repo.remote_path + "\" | grep description > \"" + os.path.join(USER_REPOS_DIR, descLogName) + "\"")
         desc = open(os.path.join(USER_REPOS_DIR, descLogName), "r").readlines()[0]
         desc = desc.split(":", 2)[1].strip()
-        os.system("rm -f " + os.path.join(USER_REPOS_DIR, descLogName))
+        os.system("rm -f " + "\"" + os.path.join(USER_REPOS_DIR, descLogName) + "\"")
         if desc.isspace():
           desc = None
         response["data"].append({"repoId" : repoId, 
@@ -160,7 +160,9 @@ class UserBindRepo(View):
         if localHasRepo == False:
           # if dir not exists, then clone
           if not os.path.exists(localPath):
-            r = os.system("gh repo clone " + repoRemotePath + " " + localPath)
+            print("---------------")
+            print("gh repo clone " + repoRemotePath + " " + "\"" + localPath + "\"")
+            r = os.system("gh repo clone " + repoRemotePath + " " + "\"" + localPath + "\"")
             if r != 0:
               return JsonResponse(genResponseStateInfo(response, 5, "clone repo fail"))
         # insert Repo
@@ -242,11 +244,11 @@ class GetRepoBranches(View):
       commitLog = str(getCounter()) + "_commitInfo.log"
       remotePath = Repo.objects.get(id=repoId).remote_path
       os.system("gh api -H \"Accept: application/vnd.github+json\" -H \
-                \"X-GitHub-Api-Version: 2022-11-28\" /repos/" + remotePath + "/branches > " + os.path.join(USER_REPOS_DIR, log))
+                \"X-GitHub-Api-Version: 2022-11-28\" /repos/" + remotePath + "/branches > " + "\"" + os.path.join(USER_REPOS_DIR, log) + "\"")
       ghInfo = json.load(open(os.path.join(USER_REPOS_DIR, log), encoding="utf-8"))
       for it in ghInfo:
         sha = it["commit"]["sha"]
-        cmd = "gh api /repos/" + remotePath + "/commits/" + sha + " > " + os.path.join(USER_REPOS_DIR, commitLog)
+        cmd = "gh api /repos/" + remotePath + "/commits/" + sha + " > " + "\"" + os.path.join(USER_REPOS_DIR, commitLog) + "\""
         os.system(cmd)
         commitInfo = json.load(open(os.path.join(USER_REPOS_DIR, commitLog), encoding="utf-8"))
         data.append({"branchName" : it["name"],
@@ -292,10 +294,10 @@ class GetCommitHistory(View):
     data = []
     try:
       log = str(getCounter()) + "_getCommitHistory.log"
-      localPath = Repo.objects.get(id=repoId).local_path
+      localPath = "\"" + Repo.objects.get(id=repoId).local_path + "\""
       getSemaphore(repoId)
       os.system("cd " + localPath + " && git checkout " + branchName + " && git pull")
-      cmd = "cd " + localPath + " && bash " + os.path.join(BASE_DIR, "myApp/get_commits.sh") + " > " + os.path.join(USER_REPOS_DIR, log)
+      cmd = "cd " + localPath + " && bash " + "\"" + os.path.join(BASE_DIR, "myApp/get_commits.sh") + "\"" + " > " + "\"" + os.path.join(USER_REPOS_DIR, log) + "\""
       os.system(cmd)
       releaseSemaphore(repoId)
       try:
@@ -303,7 +305,7 @@ class GetCommitHistory(View):
       except Exception as e:
         DBG("in GetCommitHistory has excp : " + str(e))
       response["data"] = ghInfo
-      os.system("rm -f " + os.path.join(USER_REPOS_DIR, log))
+      os.system("rm -f " + "\"" + os.path.join(USER_REPOS_DIR, log) + "\"")
     except Exception as e:
       return genUnexpectedlyErrorInfo(response, e)
     return JsonResponse(response)
@@ -336,7 +338,7 @@ class GetIssueList(View):
       log = "getIssueList.log"
       remotePath = Repo.objects.get(id=repoId).remote_path
       os.system("gh api -H \"Accept: application/vnd.github+json\" -H \
-                \"X-GitHub-Api-Version: 2022-11-28\" /repos/" + remotePath + "/issues?state=all > " + os.path.join(USER_REPOS_DIR, log))
+                \"X-GitHub-Api-Version: 2022-11-28\" /repos/" + remotePath + "/issues?state=all > " + "\"" + os.path.join(USER_REPOS_DIR, log) + "\"")
       ghInfo = json.load(open(os.path.join(USER_REPOS_DIR, log), encoding="utf-8"))
       for it in ghInfo:
         data.append({"issueId" : it["number"],
@@ -377,7 +379,7 @@ class GetPrList(View):
     try:
       log = "getPrList.log"
       remotePath = Repo.objects.get(id=repoId).remote_path
-      os.system("gh api  /repos/" + remotePath + "/pulls?state=all > " + os.path.join(USER_REPOS_DIR, log))
+      os.system("gh api  /repos/" + remotePath + "/pulls?state=all > " + "\"" + os.path.join(USER_REPOS_DIR, log) + "\"")
       ghInfo = json.load(open(os.path.join(USER_REPOS_DIR, log), encoding="utf-8"))
       for it in ghInfo:
         data.append({"prId" : it["number"],
@@ -434,7 +436,7 @@ class GetFileTree(View):
     try:
       localPath = Repo.objects.get(id=repoId).local_path
       getSemaphore(repoId)
-      os.system("cd " + localPath + " && git checkout " + branch + " && git pull")
+      os.system("cd " + "\"" + localPath + "\"" + " && git checkout " + branch + " && git pull")
       r = _getFileTree(localPath)
       for item in r["children"]:
         data.append(item)
