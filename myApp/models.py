@@ -12,10 +12,12 @@ class User(models.Model):
     NORMAL = 'A'
     ILLEGAL = 'B'
     ADMIN = 'C'
+    ASSISTANT = 'D'
     STATUS_LIST = (
         (NORMAL, 'NORMAL'),
         (ILLEGAL, 'ILLEGAL'),
         (ADMIN, 'ADMIN'),
+        (ASSISTANT, 'ASSISTANT'),
     )
     RED = 'A'
     ORANGE = 'B'
