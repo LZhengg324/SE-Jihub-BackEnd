@@ -518,6 +518,29 @@ class CreatePullRequest(View):
       return genUnexpectedlyErrorInfo(response, e)
     return JsonResponse(response)
 
+class createBranch(View):
+  def post(self, request):
+    DBG("---- in " + sys._getframe().f_code.co_name + " ----")
+    response = {'message': "404 not success", "errorcode": -1}
+    try:
+      kwargs:dict = json.loads(request.body)
+    except Exception:
+      return JsonResponse(response)
+    response = {}
+    name = kwargs.get('name')
+    project_id = kwargs.get('project_id')
+    remote_path = kwargs.get('remote_path')
+    user_id = kwargs.get('user_id')
+    repo = Repo.objects.get(project_id=project_id, remote_path=remote_path)
+    repo_id = repo.id
+    localpath = repo.local_path
+    try:
+      os.system("cd \"" + localpath + "\" && git branch -M " + name)
+    except Exception:
+      return JsonResponse(genResponseStateInfo(response, 1, "os.system error"))
+    branch = Branch.objects.create(name=name, project_id=project_id, repo_id=repo_id, user_id=user_id)
+    branch.save()
+
 class GetDiff(View):
   def get(self, request):
     DBG("---- in " + sys._getframe().f_code.co_name + " ----")
