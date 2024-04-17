@@ -400,7 +400,7 @@ class watchMyTask(View):
             return JsonResponse(response)
 
         taskList = Task.objects.filter(project_id_id=projectId, parent_id=None).order_by("order")
-        cur_time = datetime.datetime.now()
+        cur_time = datetime.datetime.now(datetime.timezone.utc)
         data = []
         for i in taskList:
             tmp = {"taskName": i.name, "taskId": i.id}

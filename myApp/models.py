@@ -255,9 +255,12 @@ class ProgressTask(models.Model):
     progress_id = models.ForeignKey(Progress, on_delete=models.CASCADE)
 
 class PullRequest(models.Model):
-    pr_id = models.AutoField(primary_key=True)
-    pr_title = models.CharField(max_length=255)
-    pr_description = models.TextField()
+    id = models.AutoField(primary_key=True)
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    project_id = models.ForeignKey(Project, on_delete=models.CASCADE)
+    creator_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    createdAt = models.DateTimeField(auto_now_add=True)
     OPEN = 'A'
     MERGED = 'B'
     CLOSED = 'C'
@@ -266,11 +269,18 @@ class PullRequest(models.Model):
         (MERGED, 'MERGED'),
         (CLOSED, 'CLOSED'),
     )
-    pr_status = models.CharField(max_length=2, choices=STATUS_LIST)
+    status = models.CharField(max_length=2, choices=STATUS_LIST)
 
 class PrLinkTask(models.Model):
     pr_id = models.ForeignKey(PullRequest, on_delete=models.CASCADE)
     task_id = models.ForeignKey(Task, on_delete=models.CASCADE)
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+
+class Branch(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=255) #分支名
+    repo_id = models.ForeignKey(Repo, on_delete=models.CASCADE) #记录是某个项目中的哪个repo
+    project_id = models.ForeignKey(Project, on_delete=models.CASCADE) #记录是哪个项目
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE) #记录是哪个开发人员的分支
 
 # TODO : add enum check in function
