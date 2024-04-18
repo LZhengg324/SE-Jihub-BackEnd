@@ -1,7 +1,7 @@
 from myApp.models import *
 from djangoProject.settings import response_json
 import json
-import image
+from myApp.image import delete_img, get_img_url
 
 SUCCESS = 0
 ILLEGAL = 1
@@ -17,7 +17,7 @@ def get_room_content(request):
     for message in Message.objects.filter(group_id=roomId, receive_user=user):
         content = message.content
         if message.type == 'B':
-            content = image.get_img_url(message.content)
+            content = get_img_url(message.content)
 
         messages.append({'content': content,
                          'senderName': message.send_user.name,
@@ -265,7 +265,7 @@ def delete_room(request):
         messages = Message.objects.filter(group=room)
         for message in messages:
             if message.type == 'B':
-                image.delete_img(message.content)
+                delete_img(message.content)
         messages.delete()
 
         association = UserGroup.objects.filter(group=room)

@@ -1,6 +1,6 @@
 import json
 import datetime
-import image
+from myApp.image import base64_to_img_name, get_img_url
 
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
@@ -49,7 +49,7 @@ class ChatConsumer(WebsocketConsumer):
                 check_status = 'C'
 
             if message_type == 'B':
-                img_name = image.base64_to_img_name(message_content)
+                img_name = base64_to_img_name(message_content)
                 message_content = img_name
 
             message = Message(
@@ -65,7 +65,7 @@ class ChatConsumer(WebsocketConsumer):
 
         # send the message to others in this room.
         if message_type == 'B':
-            message_content = image.get_img_url(message_content)
+            message_content = get_img_url(message_content)
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name, {
                 'type': 'chat_message',
