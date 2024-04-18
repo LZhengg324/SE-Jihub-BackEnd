@@ -74,10 +74,12 @@ class Task(models.Model):
     COMPLETED = 'A'
     INPROGRESS = 'B'
     NOTSTART = 'C'
+    REVIEWING = 'D'
     STATUS_LIST = (
         (COMPLETED, 'COMPLETED'),
         (INPROGRESS, 'INPROGRESS'),
         (NOTSTART, 'NOTSTART'),
+        (REVIEWING, 'REVIEWING'),
     )
     status = models.CharField(max_length=2, choices=STATUS_LIST)
     contribute_level = models.IntegerField(default=0)
@@ -94,8 +96,8 @@ class Group(models.Model):
     PRIVATE = 'PRI'
     PUBLIC = 'PUB'
     TYPE_LIST = (
-    (PRIVATE, 'PRIVATE'),
-    (PUBLIC, 'PUBLIC')
+        (PRIVATE, 'PRIVATE'),
+        (PUBLIC, 'PUBLIC')
     )
     type          = models.CharField(max_length=5, choices=TYPE_LIST)
 
@@ -251,5 +253,34 @@ class UserProjectRepo(models.Model):
 class ProgressTask(models.Model):
     repo_id = models.ForeignKey(Repo, on_delete=models.CASCADE)
     progress_id = models.ForeignKey(Progress, on_delete=models.CASCADE)
+
+class PullRequest(models.Model):
+    id = models.AutoField(primary_key=True)
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    project_id = models.ForeignKey(Project, on_delete=models.CASCADE)
+    creator_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    createdAt = models.DateTimeField(auto_now_add=True)
+    OPEN = 'A'
+    MERGED = 'B'
+    CLOSED = 'C'
+    STATUS_LIST = (
+        (OPEN, 'OPEN'),
+        (MERGED, 'MERGED'),
+        (CLOSED, 'CLOSED'),
+    )
+    status = models.CharField(max_length=2, choices=STATUS_LIST)
+
+class PrLinkTask(models.Model):
+    pr_id = models.ForeignKey(PullRequest, on_delete=models.CASCADE)
+    task_id = models.ForeignKey(Task, on_delete=models.CASCADE)
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+
+class Branch(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=255) #分支名
+    repo_id = models.ForeignKey(Repo, on_delete=models.CASCADE) #记录是某个项目中的哪个repo
+    project_id = models.ForeignKey(Project, on_delete=models.CASCADE) #记录是哪个项目
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE) #记录是哪个开发人员的分支
 
 # TODO : add enum check in function
