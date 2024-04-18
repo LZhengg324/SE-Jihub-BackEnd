@@ -572,13 +572,14 @@ class GetDiff(View):
 
     try:
       local_path = Repo.objects.get(remote_path=remote_path).local_path
-      cmd = "cd \"" + local_path + "\" && git diff main " + source_branch
+      cmd = "cd \"" + local_path + "\" && gh pr diff main " + source_branch
       diff_output = os.popen(cmd).read()
     except Exception:
       return JsonResponse(genResponseStateInfo(response, 4, "os.popen Error"))
 
     genResponseStateInfo(response, 0, "git diff success")
     response['diff_output'] = diff_output
+    print("get Diff try")
     return JsonResponse(response)
 
 
