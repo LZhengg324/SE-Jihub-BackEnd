@@ -579,6 +579,7 @@ class GetDiff(View):
 
     genResponseStateInfo(response, 0, "git diff success")
     response['diff_output'] = diff_output
+    print("hello world")
     return JsonResponse(response)
 
 
