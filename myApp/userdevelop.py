@@ -489,7 +489,7 @@ class GetContent(View):
       return genUnexpectedlyErrorInfo(response, e)
     return JsonResponse(response)
 
-#创建一个Pull Request，并把Pull Request记录到表中，未处理关联，未添加进url
+#创建一个Pull Request，并把Pull Request记录到表中，未处理关联，未添加进url，未测试
 class CreatePullRequest(View):
   def post(self, request):
     DBG("---- in " + sys._getframe().f_code.co_name + " ----")
@@ -529,17 +529,23 @@ class createBranch(View):
     response = {}
     name = kwargs.get('name')
     project_id = kwargs.get('project_id')
-    remote_path = kwargs.get('remote_path')
+    remote_path = str(kwargs.get('remote_path'))
+    print("remote_path : " + remote_path)
     user_id = kwargs.get('user_id')
-    repo = Repo.objects.get(project_id=project_id, remote_path=remote_path)
+    user = User.objects.get(id=user_id)
+    repo = Repo.objects.get(remote_path=remote_path)
+    project = Project.objects.get(id=project_id)
     repo_id = repo.id
+    if Branch.objects.filter(name=name, project_id=project_id, user_id=user_id, repo_id=repo_id).exists():
+      return JsonResponse(genResponseStateInfo(response,1, "Duplicated Branch"))
     localpath = repo.local_path
     try:
-      os.system("cd \"" + localpath + "\" && git branch -M " + name)
+      os.system("cd \"" + localpath + "\" && git branch " + name + " && git checkout " + name)
     except Exception:
-      return JsonResponse(genResponseStateInfo(response, 1, "os.system error"))
-    branch = Branch.objects.create(name=name, project_id=project_id, repo_id=repo_id, user_id=user_id)
+      return JsonResponse(genResponseStateInfo(response, 2, "os.system error"))
+    branch = Branch.objects.create(name=name, project_id=project, repo_id=repo, user_id=user)
     branch.save()
+    return JsonResponse(genResponseStateInfo(response, 0, "Branch created successfully"))
 
 class GetDiff(View):
   def get(self, request):
@@ -553,6 +559,7 @@ class GetDiff(View):
     user_id = kwargs['user_id']
     remote_path = kwargs['remote_path']
     project_id = kwargs['project_id']
+    source_branch = kwargs['source_branch']
 
     if user_id == None or remote_path == None or project_id == None:
       return JsonResponse(genResponseStateInfo(response, 1, "Null User_id/Remote_path/Project_id"))
@@ -565,8 +572,6 @@ class GetDiff(View):
 
     try:
       local_path = Repo.objects.get(remote_path=remote_path).local_path
-      repo_id = Repo.objects.get(remote_path=remote_path).id
-      source_branch = Branch.objects.get(repo_id=repo_id, user_id=user_id, project_id=project_id).name
       cmd = "cd \"" + local_path + "\" && git diff main " + source_branch
       diff_output = os.popen(cmd).read()
     except Exception:
