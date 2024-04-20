@@ -583,3 +583,33 @@ class GetDiff(View):
 
 
 
+
+
+
+
+class CreateRepo(View):
+  def post(self, request):
+    DBG("---- in " + sys._getframe().f_code.co_name + " ----")
+    response = {'message': "404 not success", "errorcode": -1}
+    try:
+      kwargs:dict = json.loads(request.body)
+    except Exception:
+      return JsonResponse(response)
+    response = {}
+    name = kwargs.get('name')
+    user_id = kwargs.get('user_id')
+    project_id = kwargs.get('project_id')
+    remote_path = str(kwargs.get('remote_path'))
+    local_path = os.path.join(USER_REPOS_DIR, name)
+    print("remote_path : " + remote_path)
+    project = Project.objects.get(id=project_id)
+    try:
+      os.system("cd \"" + local_path + "\" && gh repo create {name}")
+    except Exception:
+      return JsonResponse(genResponseStateInfo(response, 2, "os.system error"))
+    repo = Repo.objects.create(name=name, local_path=local_path, remote_path=remote_path)
+    repo.save()
+    userProjectRepo = UserProjectRepo.objects.create(user_id=user_id, project_id=project_id, repo_id=repo.id)
+    userProjectRepo.save()
+
+    return JsonResponse(genResponseStateInfo(response, 0, "Repo created successfully"))
