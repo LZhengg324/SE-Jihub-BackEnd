@@ -12,12 +12,13 @@ def get_img_url(img_name):
 
 
 def get_img_path(img_name):
-    return '../' + IMG_PATH + img_name
+    return IMG_PATH + img_name
 
 
 def delete_img(img_name):
     path = get_img_path(img_name)
-    os.remove(path)
+    if os.path.exists(path):
+        os.remove(path)
 
 
 def base64_to_img_name(base64_string):

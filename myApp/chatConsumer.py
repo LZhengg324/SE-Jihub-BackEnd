@@ -43,14 +43,16 @@ class ChatConsumer(WebsocketConsumer):
         send_time = datetime.datetime.now()
         # generate the message for all users in this room,
         # and flag these messages' unchecking status.
+        cnt = 0
         for association in UserGroup.objects.filter(group_id=self.room.id):
             check_status = 'UC'
             if association.user.id == send_user_id:
                 check_status = 'C'
 
-            if message_type == 'B':
+            if message_type == 'B' and cnt == 0:
                 img_name = base64_to_img_name(message_content)
                 message_content = img_name
+                cnt += 1
 
             message = Message(
                 type=message_type,
@@ -76,7 +78,6 @@ class ChatConsumer(WebsocketConsumer):
                 'message_type': message_type
             }
         )
-
 
     def chat_message(self, event):
         send_time = str(event['send_time'])

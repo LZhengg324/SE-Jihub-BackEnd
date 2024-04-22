@@ -50,7 +50,7 @@ def get_user_public_rooms(request):
                               'userName': asso.user.name,
                               'userRole': asso.role})
             for user in users:
-                if user.userRole == 'B':
+                if user['userRole'] == 'B':
                     owner_index = users.index(user)
                     users[0], users[owner_index] = users[owner_index], users[0]
                     break
@@ -74,7 +74,7 @@ def get_user_private_rooms(request):
     kwargs: dict = json.loads(request.body)
 
     projectId = int(kwargs.get('projectId'))
-    userId = int(request.session['currentUserId'])
+    userId = int(kwargs.get('currentUserId'))
 
     project = Project.objects.get(id=projectId)
     user = User.objects.get(id=userId)
@@ -194,7 +194,7 @@ def create_private_room(request):
 def add_user_to_room(request):
     kwargs: dict = json.loads(request.body)
 
-    user = User.objects.get(id=int(kwargs.get('userId')))
+    user = User.objects.get(id=int(kwargs.get('targetUserId')))
     group = Group.objects.get(id=int(kwargs.get('roomId')))
 
     if group.type == 'PRI':
@@ -262,7 +262,7 @@ def delete_room(request):
             message="CAN'T DELETE PRIVATE ROOM!"
         )
     if association.role == 'B':
-        messages = Message.objects.filter(group=room)
+        messages = Message.objects.filter(group_id=room)
         for message in messages:
             if message.type == 'B':
                 delete_img(message.content)
