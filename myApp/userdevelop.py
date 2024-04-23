@@ -647,7 +647,7 @@ class ApprovePullRequest(View):
           task.status = Task.COMPLETED
           task.save()
       else:
-        return JsonResponse(genResponseStateInfo(response, 2, "create pr failed"))
+        return JsonResponse(genResponseStateInfo(response, 2, "approve pr failed"))
     except Exception as e:
       return JsonResponse(response, 3, str(e))
 
