@@ -71,6 +71,7 @@ class Repo(models.Model):
 
 
 class ProjectLinkPr(models.Model):
+    id = models.AutoField(primary_key=True)
     ghpr_id = models.IntegerField(unique=True)
     repo_id = models.ForeignKey(Repo, on_delete=models.CASCADE)
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
