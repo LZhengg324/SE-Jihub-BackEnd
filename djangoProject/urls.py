@@ -52,8 +52,10 @@ urlpatterns = [
     path('api/develop/getPrList', userdevelop.GetPrList.as_view()),
     path('api/develop/getFileTree', userdevelop.GetFileTree.as_view()),
     path('api/develop/getContent', userdevelop.GetContent.as_view()),
+    path('api/develop/createPullRequest', userdevelop.CreatePullRequest.as_view()), #新添，已测试
+    path('api/develop/approvePullRequest', userdevelop.ApprovePullRequest.as_view()),   #新添，已测试
+    path('api/develop/closePullRequest', userdevelop.ClosePullRequest.as_view()),   #新添，已测试
     path('api/develop/CreateRepo', userdevelop.CreateRepo.as_view()),   #新添，未测试
-    path('api/develop/createPullRequest', userdevelop.CreatePullRequest.as_view()),
     path('api/develop/createBranch', userdevelop.createBranch.as_view()),   #新添，已测试
     path('api/develop/getDiff', userdevelop.GetDiff.as_view()), #新添，已测试
     path('api/register', userBasic.register),

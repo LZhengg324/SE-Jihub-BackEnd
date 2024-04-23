@@ -539,14 +539,16 @@ class CreatePullRequest(View):
         project = Project.objects.get(id=project_id)
         projectLinkPr = ProjectLinkPr.objects.create(ghpr_id=ghpr_id, user_id=user, repo_id=repo, project_id=project)
         projectLinkPr.save()
-        # for t in tasks:
-        #   task = Task.objects.get(id=t)
-        #   task.status = Task.REVIEWING
-        #   task.link_pr = projectLinkPr.ghpr_id
+        for t in tasks:
+          task = Task.objects.get(id=t)
+          print(task, task.id)
+          task.status = Task.REVIEWING
+          task.link_pr = projectLinkPr
+          task.save()
       else:
         return JsonResponse(genResponseStateInfo(response, 2, "create pr failed"))
     except Exception as e:
-      return JsonResponse({'success':False, 'message':str(e)})
+      return JsonResponse(genResponseStateInfo(response, 3, str(e)))
     return JsonResponse(response)
 
 class createBranch(View):
@@ -612,6 +614,85 @@ class GetDiff(View):
     genResponseStateInfo(response, 0, "gh pr diff success")
     response['diff_output'] = diff_output
     return JsonResponse(response)
+
+class ApprovePullRequest(View):
+  def post(self, request):
+    DBG("---- in " + sys._getframe().f_code.co_name + " ----")
+    response = {'message': "404 not success", "errorcode": -1}
+    try:
+      kwargs: dict = json.loads(request.body)
+    except Exception:
+      return JsonResponse(response)
+    response = {}
+    ghpr_id = kwargs['ghpr_id']
+    repo_id = kwargs['repo_id']
+
+    if not Repo.objects.filter(id=repo_id).exists:
+      return JsonResponse(genResponseStateInfo(request, 1, "repo not exist"))
+
+    repo = Repo.objects.get(id=repo_id)
+
+    try:
+      local_path = repo.local_path
+      command = (
+        'cd "{}" && '
+        'gh pr merge "{}" --merge'
+        .format(local_path, ghpr_id)
+      )
+      result = subprocess.run(command, capture_output=True, shell=True, text=True)
+      print(result)
+      if result.returncode == 0:
+        tasks_link = Task.objects.filter(link_pr=ghpr_id)
+        for task in tasks_link:
+          task.status = Task.COMPLETED
+          task.save()
+      else:
+        return JsonResponse(genResponseStateInfo(response, 2, "create pr failed"))
+    except Exception as e:
+      return JsonResponse(response, 3, str(e))
+
+    return JsonResponse(genResponseStateInfo(response, 0, "approve pull success"))
+
+class ClosePullRequest(View):
+  def post(self, request):
+    DBG("---- in " + sys._getframe().f_code.co_name + " ----")
+    response = {'message': "404 not success", "errorcode": -1}
+    try:
+      kwargs: dict = json.loads(request.body)
+    except Exception:
+      return JsonResponse(response)
+
+    reponse={}
+    ghpr_id = kwargs['ghpr_id']
+
+    if not ProjectLinkPr.objects.filter(ghpr_id=ghpr_id).exists:
+      return JsonResponse(genResponseStateInfo(response, 1, "ghpr_id is invalid"))
+
+    projectLinkPr = ProjectLinkPr.objects.get(ghpr_id=ghpr_id)
+    repo = projectLinkPr.repo_id
+    print(repo)
+    try:
+      local_path = repo.local_path
+      print(local_path)
+      command = (
+        'cd \"{}\" &&'
+        'gh pr close "{}"'
+        .format(local_path, ghpr_id)
+      )
+      result = subprocess.run(command, capture_output=True, shell=True, text=True)
+      print(result)
+      if result.returncode == 0 :
+        tasks_link = Task.objects.filter(link_pr=ghpr_id)
+        for task in tasks_link:
+          task.status = Task.INPROGRESS
+          task.link_pr = None
+          task.save()
+      else :
+        return JsonResponse(genResponseStateInfo(response, 2, "gh pr close failed"))
+    except Exception as e:
+      return  JsonResponse(genResponseStateInfo(reponse, 3, str(e)))
+
+    return JsonResponse(genResponseStateInfo(reponse, 0, "gh pr close success"))
 
 class CreateRepo(View):
   def post(self, request):
