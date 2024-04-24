@@ -13,8 +13,14 @@ from urllib.parse import urlencode
 from wsgiref.handlers import format_date_time
 
 import websocket  # 使用websocket_client
+appid = "8c7f700a"  # 填写控制台中获取的 APPID 信息
+api_secret = "OGQwMjI2MmRjNTY0ZjcxZWZlMGRlNmM5"  # 填写控制台中获取的 APISecret 信息
+api_key = "2a4394a0d3316a4271dac8eb0c65ab04"  # 填写控制台中获取的 APIKey 信息
+domain = "generalv3.5"
+Spark_url = "wss://spark-api.xf-yun.com/v3.5/chat"  # v3.5环服务地址
 answer = ""
 sid = ''
+
 
 class Ws_Param(object):
     # 初始化
@@ -55,8 +61,6 @@ class Ws_Param(object):
         }
         # 拼接鉴权参数，生成url
         url = self.Spark_url + '?' + urlencode(v)
-        # print(url)
-        # 此处打印出建立连接时候的url,参考本demo的时候可取消上方打印的注释，比对相同参数时生成的url与自己代码生成的url是否一致
         return url
 
 
@@ -66,7 +70,7 @@ def on_error(ws, error):
 
 
 # 收到websocket关闭的处理
-def on_close(ws,one,two):
+def on_close(ws, one, two):
     print(" ")
 
 
@@ -76,7 +80,7 @@ def on_open(ws):
 
 
 def run(ws, *args):
-    data = json.dumps(gen_params(appid=ws.appid, domain= ws.domain,question=ws.question))
+    data = json.dumps(gen_params(appid=ws.appid, domain=ws.domain, question=ws.question))
     ws.send(data)
 
 
@@ -95,22 +99,20 @@ def on_message(ws, message):
         choices = data["payload"]["choices"]
         status = choices["status"]
         content = choices["text"][0]["content"]
-        print(content,end ="")
         global answer
         answer += content
-        # print(1)
         if status == 2:
             ws.close()
 
 
-def gen_params(appid, domain,question):
+def gen_params(appid, uid, domain, question):
     """
     通过appid和用户的提问来生成请参数
     """
     data = {
         "header": {
             "app_id": appid,
-            "uid": "1234"
+            "uid": uid
         },
         "parameter": {
 
@@ -132,7 +134,8 @@ def gen_params(appid, domain,question):
     return data
 
 
-def main(appid, api_key, api_secret, Spark_url,domain, question):
+def main(uid, question):
+
     wsParam = Ws_Param(appid, api_key, api_secret, Spark_url)
     websocket.enableTrace(False)
     wsUrl = wsParam.create_url()
@@ -141,5 +144,3 @@ def main(appid, api_key, api_secret, Spark_url,domain, question):
     ws.question = question
     ws.domain = domain
     ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
-
-
