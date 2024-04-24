@@ -117,15 +117,15 @@ class ChatConsumer(WebsocketConsumer):
                 break
 
         # send message to client
-        self.send(text_data=json.dumps({
-            'type': 1,
-            'senderId': event['send_user_id'],
-            'senderName': event['send_user_name'],
-            'roomId': event['group_id'],
-            'mes': event['message'],
-            'mes_type': event['message_type'],
-            'time': str(event['send_time'])
-        }))
+        if self.groupId == event['group_id']:
+            self.send(text_data=json.dumps({
+                'type': 1,
+                'senderId': event['send_user_id'],
+                'senderName': event['send_user_name'],
+                'mes': event['message'],
+                'mes_type': event['message_type'],
+                'time': str(event['send_time'])
+            }))
 
         if self.groupId != event['group_id']:
             self.send(text_data=json.dumps({
