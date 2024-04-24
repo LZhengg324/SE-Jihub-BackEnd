@@ -35,18 +35,17 @@ class ChatConsumer(WebsocketConsumer):
         assert text_data is not None
         # read the message from webcokect scope['text']['message']
         ws_json_data = json.loads(text_data)
-        send_user_id = int(ws_json_data['sender'])
         message_content = str(ws_json_data['message'])
         message_type = str(ws_json_data['type'])
 
-        send_user = User.objects.get(id=send_user_id)
+        send_user = User.objects.get(id=self.user_id)
         send_time = datetime.datetime.now()
         # generate the message for all users in this room,
         # and flag these messages' unchecking status.
         cnt = 0
         for association in UserGroup.objects.filter(group_id=self.room.id):
             check_status = 'UC'
-            if association.user.id == send_user_id:
+            if association.user.id == self.user_id:
                 check_status = 'C'
 
             if message_type == 'B' and cnt == 0:

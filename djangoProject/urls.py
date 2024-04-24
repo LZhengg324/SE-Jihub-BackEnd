@@ -15,9 +15,10 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path
 
-from myApp import userdevelop, manager, userBasic, userPlan, debug, AI, shareDoc,file,mail
+from myApp import userdevelop, manager, userBasic, userPlan, debug, shareDoc,file,mail
+from myApp.sparkAI import AI
 from myApp import notice, userChat
 from django.urls import re_path
 from myApp import chatConsumer
@@ -94,8 +95,8 @@ urlpatterns = [
     path('api/notice/userGetNotice', notice.UserGetNotice.as_view()),
     path('api/notice/userConfirmNotice', notice.UserConfirmNotice.as_view()),
     path('api/plan/getEmail', userPlan.getEmail.as_view()),
-    path('api/ai/UnitTest', AI.UnitTest.as_view()),
-    path('api/ai/CodeReview', AI.CodeReview.as_view()),
+    path('api/ai/UnitTest', AI.UnitTest),
+    path('api/ai/CodeReview', AI.CodeReview),
     path('api/plan/showContribute',userPlan.showContribute.as_view()),
     path('api/plan/changeOrder',userPlan.changeOrder.as_view()),
     path('api/doc/userDocList', shareDoc.UserDocList.as_view()),
