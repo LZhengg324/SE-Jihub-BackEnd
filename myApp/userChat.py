@@ -7,6 +7,11 @@ SUCCESS = 0
 ILLEGAL = 1
 
 
+def calUnReadNums(uid, gid):
+    messages = Message.objects.filter(receive_user=uid, group_id=gid, status='UC')
+    return len(messages)
+
+
 def get_room_content(request):
     kwargs: dict = json.loads(request.body)
 
@@ -33,12 +38,7 @@ def get_room_content(request):
     )
 
 
-def get_user_public_rooms(request):
-    kwargs: dict = json.loads(request.body)
-
-    projectId = int(kwargs.get('projectId'))
-    userId = int(kwargs.get('currentUserId'))
-
+def get_pub_rooms(userId, projectId):
     discussions = []
     for association in UserGroup.objects.filter(user=userId):
         group = Group.objects.get(id=association.group.id)
@@ -59,29 +59,18 @@ def get_user_public_rooms(request):
                 'roomId': group.id,
                 'roomName': group.name,
                 'outline': group.outline,
+                'unReadNums': calUnReadNums(userId, group.id),
                 'users': users
             })
-
-    return response_json(
-        errcode=SUCCESS,
-        data={
-            'discussions': discussions
-        }
-    )
+    return discussions
 
 
-def get_user_private_rooms(request):
-    kwargs: dict = json.loads(request.body)
-
-    projectId = int(kwargs.get('projectId'))
-    userId = int(kwargs.get('currentUserId'))
-
-    project = Project.objects.get(id=projectId)
-    user = User.objects.get(id=userId)
-
+def get_pri_rooms(userId, projectId):
     privates = []
-    for association in UserGroup.objects.filter(user=user):
-        group = Group.objects.get(id=association.group.id, project_id=project)
+    for association in UserGroup.objects.filter(user=userId):
+        if not Group.objects.filter(id=association.group.id, project_id=projectId).exists():
+            continue
+        group = Group.objects.get(id=association.group.id, project_id=projectId)
         if group.type == 'PRI':
             pri_assos = UserGroup.objects.filter(group=group)
             targetUserId = 0
@@ -95,13 +84,55 @@ def get_user_private_rooms(request):
             privates.append({
                 'roomId': group.id,
                 'targetUserId': targetUserId,
-                'targetUserName': targetUserName
+                'targetUserName': targetUserName,
+                'unReadNums': calUnReadNums(userId, group.id)
             })
+    return privates
 
+
+def get_user_rooms(request):
+    kwargs: dict = json.loads(request.body)
+
+    projectId = int(kwargs.get('projectId'))
+    userId = int(kwargs.get('currentUserId'))
+
+    discussions = get_pub_rooms(userId, projectId)
+    privates = get_pri_rooms(userId, projectId)
+
+    rooms = []
+    for dis in discussions:
+        rooms.append({
+            'roomId': dis['roomId'],
+            'roomName': dis['roomName'],
+            'roomType': 'PUB',
+            'outline': dis['outline'],
+            'unReadNums': dis['unReadNums'],
+            'users': dis['users']
+        })
+    for pri in privates:
+        users = []
+        users.append({
+            'userId': userId,
+            'userName': User.objects.get(id=userId).name,
+            'role': 'A'
+        })
+        users.append({
+            'userId': pri['targetUserId'],
+            'userName': pri['targetUserName'],
+            'role': 'A'
+        })
+        rooms.append({
+            'roomId': pri['roomId'],
+            'roomName': pri['targetUserName'],
+            'roomType': 'PRI',
+            'outline': '',
+            'unReadNums': pri['unReadNums'],
+            'users': users
+        })
     return response_json(
-        errcode=SUCCESS,
+        errcode=0,
         data={
-            'privates': privates
+            'rooms': rooms
         }
     )
 
