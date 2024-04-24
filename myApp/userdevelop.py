@@ -719,17 +719,10 @@ class CreateRepo(View):
     if not isUserInProject(user_id, project_id):
       return JsonResponse(genResponseStateInfo(response, 3, "user not in project"))
     try:
-      #cd \"" + local_path + "\" &&
       print("gh repo create " + name + "_" + str(project_id) + " --public")
       os.system("gh repo create " + name + "_" + str(project_id) + " --public")
       print("---------------")
-      # os.system("gh repo clone " + remotePath + " " + "\"" + localPath + "\"")
-      # print("gh repo clone " + remotePath + " " + "\"" + localPath + "\"")
 
     except Exception:
       return JsonResponse(genResponseStateInfo(response, 2, "os.system error"))
-    repo = Repo.objects.create(name=name, local_path=local_path, remote_path=remote_path)
-    repo.save()
-    userProjectRepo = UserProjectRepo.objects.create(user_id=user_id, project_id=project_id, repo_id=repo.id)
-    userProjectRepo.save()
     return JsonResponse(genResponseStateInfo(response, 0, "Repo created successfully"))
