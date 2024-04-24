@@ -670,7 +670,7 @@ class ClosePullRequest(View):
 
     projectLinkPr = ProjectLinkPr.objects.get(ghpr_id=ghpr_id)
     repo = projectLinkPr.repo_id
-    print(repo)
+    print("Repo : " + repo)
     try:
       local_path = repo.local_path
       print(local_path)
