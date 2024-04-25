@@ -1,3 +1,5 @@
+# su root 
+
 rm -f db.sqlite3
 rm -rf myApp/migrations/*
 rm -rf userRepos/*

@@ -108,10 +108,10 @@ class GetBindRepos(View):
         repoId = userProjectRepo.repo_id.id
         repo = Repo.objects.get(id=repoId)
         
-        os.system("gh repo view \"" + repo.remote_path + "\" | grep description > \"" + os.path.join(USER_REPOS_DIR, descLogName) + "\"")
+        os.system("gh repo view " + repo.remote_path + " | grep description > " + os.path.join(USER_REPOS_DIR, descLogName))
         desc = open(os.path.join(USER_REPOS_DIR, descLogName), "r").readlines()[0]
         desc = desc.split(":", 2)[1].strip()
-        os.system("rm -f " + "\"" + os.path.join(USER_REPOS_DIR, descLogName) + "\"")
+        os.system("rm -f " + os.path.join(USER_REPOS_DIR, descLogName))
         if desc.isspace():
           desc = None
         response["data"].append({"repoId" : repoId, 
@@ -160,9 +160,7 @@ class UserBindRepo(View):
         if localHasRepo == False:
           # if dir not exists, then clone
           if not os.path.exists(localPath):
-            print("---------------")
-            print("gh repo clone " + repoRemotePath + " " + "\"" + localPath + "\"")
-            r = os.system("gh repo clone " + repoRemotePath + " " + "\"" + localPath + "\"")
+            r = os.system("gh repo clone " + repoRemotePath + " " + localPath)
             if r != 0:
               return JsonResponse(genResponseStateInfo(response, 5, "clone repo fail"))
         # insert Repo
@@ -244,11 +242,11 @@ class GetRepoBranches(View):
       commitLog = str(getCounter()) + "_commitInfo.log"
       remotePath = Repo.objects.get(id=repoId).remote_path
       os.system("gh api -H \"Accept: application/vnd.github+json\" -H \
-                \"X-GitHub-Api-Version: 2022-11-28\" /repos/" + remotePath + "/branches > " + "\"" + os.path.join(USER_REPOS_DIR, log) + "\"")
+                \"X-GitHub-Api-Version: 2022-11-28\" /repos/" + remotePath + "/branches > " + os.path.join(USER_REPOS_DIR, log))
       ghInfo = json.load(open(os.path.join(USER_REPOS_DIR, log), encoding="utf-8"))
       for it in ghInfo:
         sha = it["commit"]["sha"]
-        cmd = "gh api /repos/" + remotePath + "/commits/" + sha + " > " + "\"" + os.path.join(USER_REPOS_DIR, commitLog) + "\""
+        cmd = "gh api /repos/" + remotePath + "/commits/" + sha + " > " + os.path.join(USER_REPOS_DIR, commitLog)
         os.system(cmd)
         commitInfo = json.load(open(os.path.join(USER_REPOS_DIR, commitLog), encoding="utf-8"))
         data.append({"branchName" : it["name"],
@@ -294,10 +292,10 @@ class GetCommitHistory(View):
     data = []
     try:
       log = str(getCounter()) + "_getCommitHistory.log"
-      localPath = "\"" + Repo.objects.get(id=repoId).local_path + "\""
+      localPath = Repo.objects.get(id=repoId).local_path
       getSemaphore(repoId)
       os.system("cd " + localPath + " && git checkout " + branchName + " && git pull")
-      cmd = "cd " + localPath + " && bash " + "\"" + os.path.join(BASE_DIR, "myApp/get_commits.sh") + "\"" + " > " + "\"" + os.path.join(USER_REPOS_DIR, log) + "\""
+      cmd = "cd " + localPath + " && bash " + os.path.join(BASE_DIR, "myApp/get_commits.sh") + " > " + os.path.join(USER_REPOS_DIR, log)
       os.system(cmd)
       releaseSemaphore(repoId)
       try:
@@ -305,7 +303,7 @@ class GetCommitHistory(View):
       except Exception as e:
         DBG("in GetCommitHistory has excp : " + str(e))
       response["data"] = ghInfo
-      os.system("rm -f " + "\"" + os.path.join(USER_REPOS_DIR, log) + "\"")
+      os.system("rm -f " + os.path.join(USER_REPOS_DIR, log))
     except Exception as e:
       return genUnexpectedlyErrorInfo(response, e)
     return JsonResponse(response)
@@ -338,7 +336,7 @@ class GetIssueList(View):
       log = "getIssueList.log"
       remotePath = Repo.objects.get(id=repoId).remote_path
       os.system("gh api -H \"Accept: application/vnd.github+json\" -H \
-                \"X-GitHub-Api-Version: 2022-11-28\" /repos/" + remotePath + "/issues?state=all > " + "\"" + os.path.join(USER_REPOS_DIR, log) + "\"")
+                \"X-GitHub-Api-Version: 2022-11-28\" /repos/" + remotePath + "/issues?state=all > " + os.path.join(USER_REPOS_DIR, log))
       ghInfo = json.load(open(os.path.join(USER_REPOS_DIR, log), encoding="utf-8"))
       for it in ghInfo:
         data.append({"issueId" : it["number"],
@@ -379,7 +377,7 @@ class GetPrList(View):
     try:
       log = "getPrList.log"
       remotePath = Repo.objects.get(id=repoId).remote_path
-      os.system("gh api  /repos/" + remotePath + "/pulls?state=all > " + "\"" + os.path.join(USER_REPOS_DIR, log) + "\"")
+      os.system("gh api  /repos/" + remotePath + "/pulls?state=all > " + os.path.join(USER_REPOS_DIR, log))
       ghInfo = json.load(open(os.path.join(USER_REPOS_DIR, log), encoding="utf-8"))
       for it in ghInfo:
         data.append({"prId" : it["number"],
@@ -436,7 +434,7 @@ class GetFileTree(View):
     try:
       localPath = Repo.objects.get(id=repoId).local_path
       getSemaphore(repoId)
-      os.system("cd " + "\"" + localPath + "\"" + " && git checkout " + branch + " && git pull")
+      os.system("cd " + localPath + " && git checkout " + branch + " && git pull")
       r = _getFileTree(localPath)
       for item in r["children"]:
         data.append(item)
@@ -488,248 +486,3 @@ class GetContent(View):
     except Exception as e:
       return genUnexpectedlyErrorInfo(response, e)
     return JsonResponse(response)
-
-#创建一个Pull Request，并把Pull Request记录到表中，未处理关联，未添加进url，未测试
-class CreatePullRequest(View):
-  def post(self, request):
-    DBG("---- in " + sys._getframe().f_code.co_name + " ----")
-    response = {'message' : "404 not success", "errorcode" : -1}
-    try:
-      kwargs: dict = json.loads(request.body)
-    except Exception:
-      return JsonResponse(response)
-    response = {}
-    title = kwargs.get('title')
-    description = kwargs.get('description')
-    project_id = kwargs.get('project_id')
-    if not UserProjectRepo.objects.filter(project_id=project_id).exists():
-        return JsonResponse(genResponseStateInfo(response, 1, "Project is not associated with a repo"))
-    user_id = kwargs.get('user_id')
-    source_branch_name = kwargs.get('source_branch_name')
-    repo_id = kwargs.get('repo_id')
-    tasks = kwargs.get('tasks')
-    repo = Repo.objects.get(id=repo_id)
-    local_path = repo.local_path
-    remote_path = repo.remote_path
-    # try:
-    #   os.system("gh pr create" + " --title " + title + " --body " + description + " --base main " +
-    #             " --head " + source_branch_name + " --repo " + remote_path)
-    #   genResponseStateInfo(response, 0, "Pull request created successfully")
-    #   pull_request = PullRequest.objects.create(title=title, description=description, project_id=project_id, creator_id=creator_id, state='A')
-    #   pull_request.save()
-    # except Exception as e:
-    #   return genUnexpectedlyErrorInfo(response, e)
-    try:
-      command = (
-        'cd \"{}\" && '
-        'gh pr create '
-        '--title "{}" '
-        '--body "{}" '
-        '--base main '
-        '--head "{}" '
-        '--repo "{}"'
-        .format(local_path, title, description, source_branch_name, remote_path)
-      )
-      print(command)
-      result = subprocess.run(command, capture_output=True, text=True, shell=True)
-      print(result)
-      if result.returncode == 0:
-        ghpr_id = result.stdout.strip().split('/')[-1]
-        user = User.objects.get(id=user_id)
-        project = Project.objects.get(id=project_id)
-        projectLinkPr = ProjectLinkPr.objects.create(ghpr_id=ghpr_id, user_id=user, repo_id=repo, project_id=project)
-        projectLinkPr.save()
-        for t in tasks:
-          task = Task.objects.get(id=t)
-          print(task, task.id)
-          task.status = Task.REVIEWING
-          task.link_pr = projectLinkPr
-          task.save()
-      else:
-        return JsonResponse(genResponseStateInfo(response, 2, "create pr failed"))
-    except Exception as e:
-      return JsonResponse(genResponseStateInfo(response, 3, str(e)))
-    return JsonResponse(response)
-
-class createBranch(View):
-  def post(self, request):
-    DBG("---- in " + sys._getframe().f_code.co_name + " ----")
-    response = {'message': "404 not success", "errorcode": -1}
-    try:
-      kwargs:dict = json.loads(request.body)
-    except Exception:
-      return JsonResponse(response)
-    response = {}
-    name = kwargs.get('name')
-    project_id = kwargs.get('project_id')
-    remote_path = str(kwargs.get('remote_path'))
-    print("remote_path : " + remote_path)
-    user_id = kwargs.get('user_id')
-    user = User.objects.get(id=user_id)
-    repo = Repo.objects.get(remote_path=remote_path)
-    project = Project.objects.get(id=project_id)
-    repo_id = repo.id
-    if Branch.objects.filter(name=name, project_id=project_id, user_id=user_id, repo_id=repo_id).exists():
-      return JsonResponse(genResponseStateInfo(response,1, "Duplicated Branch"))
-    localpath = repo.local_path
-    try:
-      os.system("cd \"" + localpath + "\" && git fetch origin main && git merge origin/main && git branch "
-                + name + " && git checkout " + name + " && git push -u origin " + name)
-    except Exception:
-      return JsonResponse(genResponseStateInfo(response, 2, "os.system error"))
-    branch = Branch.objects.create(name=name, project_id=project, repo_id=repo, user_id=user)
-    branch.save()
-    return JsonResponse(genResponseStateInfo(response, 0, "Branch created successfully"))
-
-class GetDiff(View):
-  def post(self, request):
-    DBG("---- in " + sys._getframe().f_code.co_name + " ----")
-    response = {'message': "404 not success", "errorcode": -1}
-    try:
-      kwargs: dict = json.loads(request.body)
-    except Exception:
-      return JsonResponse(response)
-    response={}
-    user_id = kwargs['user_id']
-    remote_path = kwargs['remote_path']
-    project_id = kwargs['project_id']
-    ghpr_id = str(kwargs['ghpr_id'])
-
-    if user_id == None or remote_path == None or project_id == None:
-      return JsonResponse(genResponseStateInfo(response, 1, "Null User_id/Remote_path/Project_id"))
-
-    if not isProjectExists(project_id):
-      return JsonResponse(genResponseStateInfo(response, 2, "Project does not exist"))
-
-    if not isUserInProject(user_id, project_id):
-      return JsonResponse(genResponseStateInfo(response, 3, "user not in project"))
-
-    try:
-      local_path = Repo.objects.get(remote_path=remote_path).local_path
-      cmd = "cd \"" + local_path + "\" && gh pr diff " + ghpr_id
-      diff_output = os.popen(cmd).read()
-    except Exception:
-      return JsonResponse(genResponseStateInfo(response, 4, "os.popen Error"))
-
-    genResponseStateInfo(response, 0, "gh pr diff success")
-    response['diff_output'] = diff_output
-    return JsonResponse(response)
-
-class ApprovePullRequest(View):
-  def post(self, request):
-    DBG("---- in " + sys._getframe().f_code.co_name + " ----")
-    response = {'message': "404 not success", "errorcode": -1}
-    try:
-      kwargs: dict = json.loads(request.body)
-    except Exception:
-      return JsonResponse(response)
-    response = {}
-    ghpr_id = kwargs['ghpr_id']
-    repo_id = kwargs['repo_id']
-
-    if not Repo.objects.filter(id=repo_id).exists:
-      return JsonResponse(genResponseStateInfo(request, 1, "repo not exist"))
-
-    repo = Repo.objects.get(id=repo_id)
-
-    try:
-      local_path = repo.local_path
-      command = (
-        'cd "{}" && '
-        'gh pr merge "{}" --merge'
-        .format(local_path, ghpr_id)
-      )
-      result = subprocess.run(command, capture_output=True, shell=True, text=True)
-      print(result)
-      if result.returncode == 0:
-        tasks_link = Task.objects.filter(link_pr=ghpr_id)
-        for task in tasks_link:
-          task.status = Task.COMPLETED
-          task.save()
-      else:
-        return JsonResponse(genResponseStateInfo(response, 2, "approve pr failed"))
-    except Exception as e:
-      return JsonResponse(response, 3, str(e))
-
-    return JsonResponse(genResponseStateInfo(response, 0, "approve pull success"))
-
-class ClosePullRequest(View):
-  def post(self, request):
-    DBG("---- in " + sys._getframe().f_code.co_name + " ----")
-    response = {'message': "404 not success", "errorcode": -1}
-    try:
-      kwargs: dict = json.loads(request.body)
-    except Exception:
-      return JsonResponse(response)
-
-    reponse={}
-    ghpr_id = kwargs['ghpr_id']
-
-    if not ProjectLinkPr.objects.filter(ghpr_id=ghpr_id).exists:
-      return JsonResponse(genResponseStateInfo(response, 1, "ghpr_id is invalid"))
-
-    projectLinkPr = ProjectLinkPr.objects.get(ghpr_id=ghpr_id)
-    repo = projectLinkPr.repo_id
-    print("Repo : " + repo)
-    try:
-      local_path = repo.local_path
-      print(local_path)
-      command = (
-        'cd \"{}\" &&'
-        'gh pr close "{}"'
-        .format(local_path, ghpr_id)
-      )
-      result = subprocess.run(command, capture_output=True, shell=True, text=True)
-      print(result)
-      if result.returncode == 0 :
-        tasks_link = Task.objects.filter(link_pr=ghpr_id)
-        for task in tasks_link:
-          task.status = Task.INPROGRESS
-          task.link_pr = None
-          task.save()
-      else :
-        return JsonResponse(genResponseStateInfo(response, 2, "gh pr close failed"))
-    except Exception as e:
-      return  JsonResponse(genResponseStateInfo(reponse, 3, str(e)))
-
-    return JsonResponse(genResponseStateInfo(reponse, 0, "gh pr close success"))
-
-class CreateRepo(View):
-  def post(self, request):
-    DBG("---- in " + sys._getframe().f_code.co_name + " ----")
-    response = {'message': "404 not success", "errorcode": -1}
-    try:
-      kwargs:dict = json.loads(request.body)
-    except Exception:
-      return JsonResponse(response)
-    response = {}
-    name = kwargs.get('name')
-    user_id = kwargs.get('user_id')
-    project_id = kwargs.get('project_id')
-    remote_path = str(kwargs.get('remote_path'))
-    local_path = os.path.join(USER_REPOS_DIR, name)
-    print("local_path : " + local_path)
-    print("remote_path : " + remote_path)
-    if user_id == None or remote_path == None or project_id == None:
-      return JsonResponse(genResponseStateInfo(response, 1, "Null User_id/Remote_path/Project_id"))
-
-    if not isProjectExists(project_id):
-      return JsonResponse(genResponseStateInfo(response, 2, "Project does not exist"))
-
-    if not isUserInProject(user_id, project_id):
-      return JsonResponse(genResponseStateInfo(response, 3, "user not in project"))
-    try:
-      #cd \"" + local_path + "\" &&
-      print("gh repo create " + name + "_" + str(project_id) + " --public")
-      os.system("gh repo create " + name + "_" + str(project_id) + " --public")
-      print("---------------")
-      # os.system("gh repo clone " + remotePath + " " + "\"" + localPath + "\"")
-      # print("gh repo clone " + remotePath + " " + "\"" + localPath + "\"")
-
-    except Exception:
-      return JsonResponse(genResponseStateInfo(response, 2, "os.system error"))
-    repo = Repo.objects.create(name=name, local_path=local_path, remote_path=remote_path)
-    repo.save()
-    userProjectRepo = UserProjectRepo.objects.create(user_id=user_id, project_id=project_id, repo_id=repo.id)
-    userProjectRepo.save()
-    return JsonResponse(genResponseStateInfo(response, 0, "Repo created successfully"))

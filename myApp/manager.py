@@ -215,8 +215,11 @@ class ShowUsersLogin(View):
     loginMessages = []
     allUsers = User.objects.all()
     for user in allUsers:
-      loginMessages.append({"name" : user.name, "email" : user.email, 
-                            "loginTime" : user.last_login_time})
+      loginMessages.append({"name" : user.name, 
+                            "email" : user.email, 
+                            "loginTime" : user.last_login_time,
+                            "IP" : user.last_login_ip,
+                          })
       
     response["loginMessages"] = loginMessages
     return JsonResponse(response)
@@ -290,3 +293,157 @@ class GetProjectScale(View):
     response["bigNum"] = big
     response["largeNum"] = large
     return JsonResponse(response)
+  
+class  GetProjectUsers(View):
+    def post(self, request):
+      DBG("---- in " + sys._getframe().f_code.co_name + " ----")
+      response = {'message': "404 not success", "errcode": -1}
+      try:
+        kwargs: dict = json.loads(request.body)
+      except Exception:
+        return JsonResponse(response)
+      response = {}
+      genResponseStateInfo(response, 0, "get users of this project ok")
+      projectId = kwargs.get('projectId',-1)
+      managerId = kwargs.get('managerId')
+      if not isAdmin(managerId):
+        return JsonResponse(genResponseStateInfo(response, 1, "Insufficient authority"))
+      userList = UserProject.objects.filter(project_id_id=projectId)    
+      users = []
+      for user in userList:
+        users.append({
+            "peopleId": user.user_id.id,
+            "peopleName": user.user_id.name,
+            "peopleEmail": user.user_id.email,
+            "peopleActive": 1,
+            "peopleStatus": user.user_id.status,
+        })
+
+      response["users"] = users
+      return JsonResponse(response)
+
+class ShowAssistants(View):
+  def post(self, request):
+    DBG("---- in " + sys._getframe().f_code.co_name + " ----")
+    response = {'message': "404 not success", "errcode": -1}
+    try:
+      kwargs: dict = json.loads(request.body)
+    except Exception:
+      return JsonResponse(response)
+    response = {}
+    genResponseStateInfo(response, 0, "get users ok")
+    users = []
+    managerId = kwargs.get('managerId')
+    if not isAdmin(managerId):
+      return JsonResponse(genResponseStateInfo(response, 1, "Insufficient authority"))
+    allUsers = User.objects.all()
+    for user in allUsers:
+      if user.status != user.ASSISTANT:
+        continue
+      users.append({
+                    "name" : user.name, 
+                    "email" : user.email, 
+                    "id": user.id, 
+                  })
+      
+    response["users"] = users
+    return JsonResponse(response)
+
+class GetProjectAssistants(View):
+  def post(self, request):
+    DBG("---- in " + sys._getframe().f_code.co_name + " ----")
+    response = {'message': "404 not success", "errcode": -1}
+    try:
+      kwargs: dict = json.loads(request.body)
+    except Exception:
+      return JsonResponse(response)
+    response = {}
+    genResponseStateInfo(response, 0, "get assistants of project ok")
+    
+    projectId = kwargs.get('projectId')
+    # managerId = kwargs.get('managerId')
+    # if not isAdmin(managerId):
+      # return JsonResponse(genResponseStateInfo(response, 1, "Insufficient authority"))
+    
+    userProjects = UserProject.objects.all()
+    allUsers = User.objects.all()
+    assistants = []
+    for userProject in userProjects:
+      # if userProject.role != "ADMIN":
+        # continue
+      if userProject.project_id != projectId:
+        continue
+
+      for assistant in allUsers:
+        if assistant.id == userProject.user_id :
+          if assistant.status != "ASSISTANT":
+            continue
+          assistants.append({
+                          "name": assistant.name,
+                          "email":  assistant.email,
+                          "id": assistant.id,
+                        })
+    response["assistants"] = assistants
+    return JsonResponse(response)
+
+class ChangeUserUploadAccess(View):
+  def post(self, request):
+    DBG("---- in " + sys._getframe().f_code.co_name + " ----")
+    response = {'message': "404 not success", "errcode": -1}
+    try:
+      kwargs: dict = json.loads(request.body)
+    except Exception:
+      return JsonResponse(response)
+    response = {}
+    genResponseStateInfo(response, 0, "change user upload access ok")
+    managerId = kwargs.get('managerId')
+    userId = kwargs.get('userId')
+    changeToStatus = kwargs.get('status')
+    if not isAdmin(managerId):
+      return JsonResponse(genResponseStateInfo(response, 1, "Insufficient authority"))
+    # projectId = kwargs.get('projectId')
+    # changeToAccess = kwargs.get('changeToAccess')
+    user = User.objects.get(id=userId)
+    userName = user.name
+    if user.status == changeToStatus:
+      return JsonResponse(genResponseStateInfo(response, 2, "no need change"))
+    user.status = changeToStatus
+    user.save()
+    response["username"] = userName
+    return JsonResponse(response)
+  
+class SetAssistantAccess(View):
+  def post(self, request):
+    DBG("---- in " + sys._getframe().f_code.co_name + " ----")
+    response = {'message': "404 not success", "errcode": -1}
+    try:
+      kwargs: dict = json.loads(request.body)
+    except Exception:
+      return JsonResponse(response)
+    response = {}
+    genResponseStateInfo(response, 0, "change status ok")
+    managerId = kwargs.get('managerId')
+    if not isAdmin(managerId):
+      return JsonResponse(genResponseStateInfo(response, 1, "Insufficient authority"))
+    assistantsId = kwargs.get('assistantsId')
+    projectId = kwargs.get('projectId')
+    # project = Project.objects.get(id=projectId)
+    # projectName = project.name
+    allUserProjects = UserProject.objects.all()
+    for userProject in allUserProjects:
+      if userProject.user_id == assistantsId:
+        if userProject.role == "ADMIN":
+          if userProject.project_id == projectId:
+            return JsonResponse(genResponseStateInfo(response, 2, "no need change"))
+
+    newUserProject = UserProject(user_id=assistantsId,
+                                 project_id = projectId,
+                                 role = "ADMIN")
+    newUserProject.save()
+    
+    response["assistant"] = assistantsId
+    response["project"] = projectId
+    return JsonResponse(response)
+  
+
+

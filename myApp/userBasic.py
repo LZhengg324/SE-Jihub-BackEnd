@@ -86,6 +86,7 @@ def login(request):
     kwargs: dict = json.loads(request.body)
     # Step 1. Check
     user = User.objects.filter(name=kwargs.get('userNameOrEmail'))
+    print("User")
     if len(user) == 0:
         user = User.objects.filter(email=kwargs.get('userNameOrEmail'))
         if len(user) == 0:

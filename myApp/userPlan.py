@@ -34,7 +34,6 @@ class watchAllProject(View):
     def post(self, request):
         response = {'errcode': 1, 'message': "404 not success"}
         userProjectRepo = UserProject.objects.filter(user_id=request.user)
-        print(userProjectRepo)
         projectList = []
         for i in userProjectRepo:
             projectList.append({
@@ -255,8 +254,7 @@ class showTaskList(View):
 
         taskList = Task.objects.filter(project_id_id=projectId, parent_id=None).order_by("order")
         data = []
-        cur_time = datetime.datetime.now(datetime.timezone.utc)
-        # cur_time = timezone
+        cur_time = datetime.datetime.now()
         for i in taskList:
             tmp = {"taskName": i.name, "taskId": i.id}
             subTasks = Task.objects.filter(parent_id=i)
@@ -400,7 +398,7 @@ class watchMyTask(View):
             return JsonResponse(response)
 
         taskList = Task.objects.filter(project_id_id=projectId, parent_id=None).order_by("order")
-        cur_time = datetime.datetime.now(datetime.timezone.utc)
+        cur_time = datetime.datetime.now()
         data = []
         for i in taskList:
             tmp = {"taskName": i.name, "taskId": i.id}

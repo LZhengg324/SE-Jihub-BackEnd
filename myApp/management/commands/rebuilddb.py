@@ -39,7 +39,7 @@ class Command(BaseCommand):
     print("begin build data base")
     userListToInsert = list()
     User(name=admin_name,email=admin_name+"@buaa.edu.cn",password=admin_pw,
-         last_login_time=datetime.datetime.today(),status=User.ADMIN).save()
+         last_login_time=datetime.datetime.today(),last_login_ip='BUAA_IP',status=User.ADMIN).save()
     Project(status=Project.INPROGRESS,access=Project.NORMAL ,name="system",
             outline="system",manager_id=User.objects.get(name="system"),progress=1).save()
     for i in range(2, 11):
@@ -48,7 +48,7 @@ class Command(BaseCommand):
       password = sha256((str(i) + str(i) + str(i) + str(i) + str(i) + str(i)).encode('utf-8')).hexdigest()
       userListToInsert.append(User(name=name, email=email,
                                    password=password,status=User.NORMAL
-                                   ,last_login_time=datetime.datetime.today()))
+                                   ,last_login_time=datetime.datetime.today(),last_login_ip='BUAA_IP_2'))
     User.objects.bulk_create(userListToInsert)
     
     

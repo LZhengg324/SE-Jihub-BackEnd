@@ -15,23 +15,23 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 
-from myApp import userdevelop, manager, userBasic, userPlan, debug, shareDoc,file,mail
-from myApp.sparkAI import AI
+from myApp import userdevelop, manager, userBasic, userPlan, debug, AI, shareDoc,file,mail
 from myApp import notice, userChat
 from django.urls import re_path
 from myApp import chatConsumer
 
 
 websocket_urlpatterns = [
-    re_path(r"ws/chat/(?P<userId>\w+)/(?P<projectId>\w+)$",
+    re_path(r"ws/chat/(?P<userId>\w+)/(?P<roomId>\w+)$",
             chatConsumer.ChatConsumer.as_asgi()),
 ]
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/userBindRepo', userdevelop.UserBindRepo.as_view()),
+
     path('api/management/showUsers', manager.ShowUsers.as_view()),
     path('api/management/showAdmins', manager.ShowAdmins.as_view()),
     path('api/management/changeUserStatus', manager.ChangeUserStatus.as_view()),
@@ -43,6 +43,15 @@ urlpatterns = [
     path('api/management/getUserNum', manager.GetUserNum.as_view()),
     path('api/management/getProjectNum', manager.GetProjectNum.as_view()),
     path('api/management/getProjectsScale', manager.GetProjectScale.as_view()),
+
+    ####                           新增部分                                 ####
+    path('api/management/getProjectUsers', manager.GetProjectUsers.as_view()),
+    path('api/management/showAssistants', manager.ShowAssistants.as_view()),
+    path('api/management/getProjectAssistants', manager.GetProjectAssistants.as_view()),
+    path('api/management/changeUserUploadAccess', manager.ChangeUserUploadAccess.as_view()),
+    path('/api/management/setAssistantAccess', manager.SetAssistantAccess.as_view()),
+    #############################################################################
+
     path('api/develop/getProjectName', userdevelop.GetProjectName.as_view()),
     path('api/develop/getBindRepos', userdevelop.GetBindRepos.as_view()),
     path('api/develop/userBindRepo', userdevelop.UserBindRepo.as_view()),
@@ -53,14 +62,10 @@ urlpatterns = [
     path('api/develop/getPrList', userdevelop.GetPrList.as_view()),
     path('api/develop/getFileTree', userdevelop.GetFileTree.as_view()),
     path('api/develop/getContent', userdevelop.GetContent.as_view()),
-    path('api/develop/createPullRequest', userdevelop.CreatePullRequest.as_view()), #新添，已测试
-    path('api/develop/approvePullRequest', userdevelop.ApprovePullRequest.as_view()),   #新添，已测试
-    path('api/develop/closePullRequest', userdevelop.ClosePullRequest.as_view()),   #新添，已测试
-    path('api/develop/CreateRepo', userdevelop.CreateRepo.as_view()),   #新添，未测试
-    path('api/develop/createBranch', userdevelop.createBranch.as_view()),   #新添，已测试
-    path('api/develop/getDiff', userdevelop.GetDiff.as_view()), #新添，已测试
+    
     path('api/register', userBasic.register),
     path('api/login', userBasic.login),
+    
     path('api/getUserInfo', userBasic.get_user_information),
     path('api/user/information/password', userBasic.modify_password),
     path('api/showProfile', userBasic.show),
@@ -87,6 +92,7 @@ urlpatterns = [
     path('api/plan/showNoticeList', userPlan.showNoticeList.as_view()),
     path('api/plan/modifyNotice', userPlan.modifyNotice.as_view()),
     path('api/plan/removeNotice', userPlan.removeNotice.as_view()),
+    
     path('api/echo', debug.echo),
     path('api/notice/userPostNoticeToAll', notice.UserPostNoticeToAll.as_view()),
     path('api/notice/userPostNoticeToOne', notice.UserPostNoticeToOne.as_view()),
@@ -95,29 +101,41 @@ urlpatterns = [
     path('api/notice/userGetNotice', notice.UserGetNotice.as_view()),
     path('api/notice/userConfirmNotice', notice.UserConfirmNotice.as_view()),
     path('api/plan/getEmail', userPlan.getEmail.as_view()),
-    path('api/ai/UnitTest', AI.UnitTest),
-    path('api/ai/CodeReview', AI.CodeReview),
+    path('api/ai/UnitTest', AI.UnitTest.as_view()),
+    path('api/ai/CodeReview', AI.CodeReview.as_view()),
     path('api/plan/showContribute',userPlan.showContribute.as_view()),
     path('api/plan/changeOrder',userPlan.changeOrder.as_view()),
+
     path('api/doc/userDocList', shareDoc.UserDocList.as_view()),
     path('api/doc/userCollectDocList', shareDoc.UserCollectDocList.as_view()),
     path('api/doc/addDocToCollect', shareDoc.AddDocToCollect.as_view()),
     path('api/doc/delDocFromCollect', shareDoc.DelDocFromCollect.as_view()),
-    path('api/doc/userCreateDoc', shareDoc.UserCreateDoc.as_view()),
-    path('api/doc/userEditDocContent', shareDoc.UserEditDocContent.as_view()),
+    path('api/doc/userCreateDoc', shareDoc.UserCreateDoc.as_view()),            #GXWD-1  
+    path('api/doc/userEditDocContent', shareDoc.UserEditDocContent.as_view()),  #GXWD-2
     path('api/doc/userGetDocLock', shareDoc.UserGetDocLock.as_view()),
     path('api/doc/userReleaseDocLock', shareDoc.UserReleaseDocLock.as_view()),
     path('api/doc/userEditDocOther', shareDoc.UserEditDocOther.as_view()),
     path('api/doc/userDelDoc', shareDoc.UserDelDoc.as_view()),
     path('api/doc/isDocLocked', shareDoc.IsDocLocked.as_view()),
-    path('api/chat/getRoomList', userChat.get_user_rooms),
+
+    # GXWD-3 
+    # GXWD-4 import
+    # GXWD-4 export
+    # GXWD-5 
+    # GXWD-6 download
+    # GGB-1 path('api/post/createPost', post.create_post),
+    # GGB-2 
+
+    path('api/chat/discussions', userChat.get_user_public_groups),
+    path('api/chat/private', userChat.get_user_private_groups),
     path('api/chat/getRoomMessages', userChat.get_room_content),
-    path('api/chat/createRoom', userChat.create_public_room),
-    path('api/chat/createPrivate', userChat.create_private_room),
-    path('api/chat/addPerson', userChat.add_user_to_room),
-    path('api/chat/deletePerson', userChat.delete_user_from_room),
-    path('api/chat/deleteRoom', userChat.delete_room),
-    path('api/chat/exitRoom', userChat.exit_room),
+    path('api/chat/createRoom', userChat.create_public_group),      # TLS-2
+    path('api/chat/createPrivate', userChat.create_private_group),  # TLS-3
+    path('api/chat/addPerson', userChat.add_user_to_group),
+    path('api/chat/deletePerson', userChat.delete_user_from_group),
+
+    # TLS-1 path('api/chat/sendMessage', userChat.send_message_to_group),
+
     # path('api/doc/docTimeUpdate', shareDoc.DocTimeUpdate.as_view()),
     path('api/plan/ProjectInfo',userPlan.ProjectInfo.as_view()),
     path('api/file/uploadFile',file.uploadFile.as_view()),

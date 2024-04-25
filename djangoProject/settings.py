@@ -94,20 +94,17 @@ WSGI_APPLICATION = 'djangoProject.wsgi.application'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-       'ENGINE': 'django.db.backends.sqlite3',
-       'NAME': BASE_DIR / 'db.sqlite3',
-    }
-    # 'default': {
+     'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+     }
+    #'default': {
     #     'ENGINE': 'django.db.backends.mysql',
-    #     'NAME': 'develop1',
-    #     'USER': 'Everybody',
-    #     'PASSWORD': 'SeinHeisstWerden,LebenHeisstLernen',
-    #     'PORT' : '3306',
-    #     'HOST': 'buaa2023sw.mysql.database.azure.com',
-    #     'OPTIONS' : {
-    #       'ssl' : {'ca' : './djangoProject/DigiCertGlobalRootCA.crt.pem'}
-    #     }
+    #     'NAME': 'jihubdb',
+    #     'USER': 'root',
+    #     'PASSWORD': '111111',
+    #     'PORT': '3306',
+    #     'HOST': 'localhost',
     # }
 }
 LOGGING = {
@@ -165,7 +162,7 @@ USE_L10N = True
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATICFILES_DIRS = [
- os.path.join(BASE_DIR,'dist'),
+ os.path.join(BASE_DIR, "template/dist/static"),
 ]
 
 STATIC_URL = '/static/'
@@ -173,7 +170,7 @@ STATIC_URL = '/static/'
 # Allowed_hosts
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_HEADERS = '*'
+CORS_ALLOW_HEADERS = ('*')
 
 
 # Default primary key field type
