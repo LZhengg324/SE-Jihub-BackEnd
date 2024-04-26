@@ -3,6 +3,8 @@ from django.http import StreamingHttpResponse,FileResponse
 import json
 from django.views import View
 from django.http import JsonResponse
+
+from djangoProject.settings import response_json
 from myApp.models import *
 from django.core.exceptions import ObjectDoesNotExist
 import os
@@ -71,6 +73,47 @@ class downloadFile(View):
             response = FileResponse(file, content_type='application/octet-stream')
             response['fileName'] = f'attachment; filename="{file.name}"'
             return response
+        except ObjectDoesNotExist:
+            response['errcode'] = 1
+            response['message'] = "file not exist"
+            return JsonResponse(response)
+
+class deleteFile(View):
+    def post(self, request):
+        response = {'errcode': 0, 'message': "404 not success"}
+        try:
+            kwargs: dict = json.loads(request.body)
+        except Exception:
+            return JsonResponse(response)
+
+        userId = kwargs.get("userId")
+        projectId = kwargs.get("projectId", -1)
+
+        link = UserProject.objects.filter(user_id=userId, project_id=projectId)
+        if not link.exists():
+            response['errcode'] = 1
+            response['message'] = "user do not exsist"
+            return JsonResponse(response)
+        else:
+            link = link.first()
+
+        if link.role == 'A' or link.role is None:
+            response['errcode'] = 1
+            response['message'] = "user do not have enough permission"
+            return JsonResponse(response)
+
+        if Project.objects.filter(id=projectId).count() == 0:
+            response['errcode'] = 1
+            response['message'] = "project not exist"
+            return JsonResponse(response)
+
+        file_name = kwargs.get("fileName")
+        try:
+            file = MyFile.objects.get(project_id_id=projectId, name=file_name)
+            if os.path.exists(file.path):
+                os.remove(file.path)
+            file.delete()
+            return response_json(errcode=2, message='Success')
         except ObjectDoesNotExist:
             response['errcode'] = 1
             response['message'] = "file not exist"

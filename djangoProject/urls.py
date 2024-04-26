@@ -122,6 +122,7 @@ urlpatterns = [
     path('api/plan/ProjectInfo',userPlan.ProjectInfo.as_view()),
     path('api/file/uploadFile',file.uploadFile.as_view()),
     path('api/file/downloadFile',file.downloadFile.as_view()),
+    path('api/file/deleteFile', file.deleteFile.as_view()),
     path('api/file/watchFiles',file.watchFiles.as_view()),
     path('api/mailTest', mail.MailTest.as_view()),
 ]

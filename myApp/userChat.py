@@ -59,6 +59,7 @@ def get_pub_rooms(userId, projectId):
                 'roomId': group.id,
                 'roomName': group.name,
                 'outline': group.outline,
+                'time': group.time,
                 'unReadNums': calUnReadNums(userId, group.id),
                 'users': users
             })
@@ -85,7 +86,8 @@ def get_pri_rooms(userId, projectId):
                 'roomId': group.id,
                 'targetUserId': targetUserId,
                 'targetUserName': targetUserName,
-                'unReadNums': calUnReadNums(userId, group.id)
+                'unReadNums': calUnReadNums(userId, group.id),
+                'time': group.time
             })
     return privates
 
@@ -107,7 +109,8 @@ def get_user_rooms(request):
             'roomType': 'PUB',
             'outline': dis['outline'],
             'unReadNums': dis['unReadNums'],
-            'users': dis['users']
+            'users': dis['users'],
+            'time': dis['time']
         })
     for pri in privates:
         users = []
@@ -127,8 +130,11 @@ def get_user_rooms(request):
             'roomType': 'PRI',
             'outline': '',
             'unReadNums': pri['unReadNums'],
-            'users': users
+            'users': users,
+            'time': pri['time']
         })
+
+    rooms.sort(key=lambda room: room['time'], reverse=True)
     return response_json(
         errcode=0,
         data={
