@@ -573,7 +573,7 @@ class createBranch(View):
       return JsonResponse(genResponseStateInfo(response,1, "Duplicated Branch"))
     localpath = repo.local_path
     try:
-      os.system("cd \"" + localpath + "\" && git fetch origin main && git merge origin/main && git branch "
+      os.system("cd \"" + localpath + "\" && git checkout main && git pull && git branch "
                 + name + " && git checkout " + name + " && git push -u origin " + name)
     except Exception:
       return JsonResponse(genResponseStateInfo(response, 2, "os.system error"))
@@ -607,6 +607,7 @@ class GetDiff(View):
     try:
       local_path = Repo.objects.get(remote_path=remote_path).local_path
       cmd = "cd \"" + local_path + "\" && gh pr diff " + ghpr_id
+      print(cmd)
       diff_output = os.popen(cmd).read()
     except Exception:
       return JsonResponse(genResponseStateInfo(response, 4, "os.popen Error"))
