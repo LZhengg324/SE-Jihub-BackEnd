@@ -116,6 +116,7 @@ class Group(models.Model):
         (PUBLIC, 'PUBLIC')
     )
     type          = models.CharField(max_length=5, choices=TYPE_LIST)
+    time = models.DateTimeField(auto_now_add=True)
 
 
 class Notice(models.Model):

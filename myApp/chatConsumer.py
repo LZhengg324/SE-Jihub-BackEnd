@@ -71,7 +71,7 @@ class ChatConsumer(WebsocketConsumer):
                     message_content = img_name
                     cnt += 1
 
-                message = Message(
+                Message.objects.create(
                     type=message_type,
                     status=check_status,
                     content=message_content,
@@ -80,8 +80,11 @@ class ChatConsumer(WebsocketConsumer):
                     send_user=send_user,
                     receive_user=association.user
                 )
-                message.save()
 
+
+            group = Group.objects.get(id=self.groupId)
+            group.time = send_time
+            group.save()
             # send the message to others in this room.
             if message_type == 'B':
                 message_content = get_img_url(message_content)
@@ -107,14 +110,11 @@ class ChatConsumer(WebsocketConsumer):
             print('error')
 
     def chat_message(self, event):
-        send_time = str(event['send_time'])
 
         # set the message status to 'checked'
-        for message in Message.objects.filter(time=send_time):
-            if message.receive_user.id == self.userId:
-                message.status = 'C'
-                message.save()
-                break
+        for message in Message.objects.filter(receive_user=self.userId, group_id=self.groupId, status='UC'):
+            message.status = 'C'
+            message.save()
 
         # send message to client
         if self.groupId == event['group_id']:
