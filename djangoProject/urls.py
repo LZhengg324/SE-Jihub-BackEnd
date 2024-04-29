@@ -25,7 +25,7 @@ from myApp import chatConsumer
 
 
 websocket_urlpatterns = [
-    re_path(r"ws/chat/(?P<userId>\w+)/(?P<roomId>\w+)$",
+    re_path(r"ws/chat/(?P<userId>\w+)/(?P<projectId>\w+)$",
             chatConsumer.ChatConsumer.as_asgi()),
 ]
 
@@ -110,8 +110,7 @@ urlpatterns = [
     path('api/doc/userEditDocOther', shareDoc.UserEditDocOther.as_view()),
     path('api/doc/userDelDoc', shareDoc.UserDelDoc.as_view()),
     path('api/doc/isDocLocked', shareDoc.IsDocLocked.as_view()),
-    path('api/chat/discussions', userChat.get_user_public_rooms),
-    path('api/chat/private', userChat.get_user_private_rooms),
+    path('api/chat/getRoomList', userChat.get_user_rooms),
     path('api/chat/getRoomMessages', userChat.get_room_content),
     path('api/chat/createRoom', userChat.create_public_room),
     path('api/chat/createPrivate', userChat.create_private_room),
@@ -123,6 +122,7 @@ urlpatterns = [
     path('api/plan/ProjectInfo',userPlan.ProjectInfo.as_view()),
     path('api/file/uploadFile',file.uploadFile.as_view()),
     path('api/file/downloadFile',file.downloadFile.as_view()),
+    path('api/file/deleteFile', file.deleteFile.as_view()),
     path('api/file/watchFiles',file.watchFiles.as_view()),
     path('api/mailTest', mail.MailTest.as_view()),
 ]

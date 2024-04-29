@@ -5,7 +5,11 @@ import myApp.sparkAI.SparkApi as SparkApi
 import time
 
 from djangoProject.settings import response_json
-
+appid = "8c7f700a"  # 填写控制台中获取的 APPID 信息
+api_secret = "OGQwMjI2MmRjNTY0ZjcxZWZlMGRlNmM5"  # 填写控制台中获取的 APISecret 信息
+api_key = "2a4394a0d3316a4271dac8eb0c65ab04"  # 填写控制台中获取的 APIKey 信息
+domain = "generalv3.5"
+Spark_url = "wss://spark-api.xf-yun.com/v3.5/chat"  # v3.5环服务地址
 
 # 初始上下文内容，当前可传system、user、assistant 等角色
 # text = [
@@ -47,7 +51,7 @@ def UnitTest(request):
     Input = "请针对以下代码生成单元测试代码:" + code
     question = checklen(getText(text, "user", Input))
     SparkApi.answer = ""
-    SparkApi.main(1, question)
+    SparkApi.main(appid, api_key, api_secret, Spark_url, domain, question)
 
     return response_json(
         errcode=0,
@@ -66,7 +70,7 @@ def CodeReview(request):
     Input = "请针对以下代码进行代码分析:" + code
     question = checklen(getText(text, "user", Input))
     SparkApi.answer = ""
-    SparkApi.main(1, question)
+    SparkApi.main(appid, api_key, api_secret, Spark_url, domain, question)
 
     return response_json(
         errcode=0,
@@ -84,6 +88,6 @@ if __name__ == '__main__':
     Input = "请针对以下代码进行代码分析:" + code
     question = checklen(getText(text, "user", Input))
     SparkApi.answer = ""
-    SparkApi.main(1, question)
+    SparkApi.main(appid, api_key, api_secret, Spark_url, domain, question)
 
     print(SparkApi.answer)
