@@ -545,11 +545,14 @@ class CreatePullRequest(View):
           task.status = Task.REVIEWING
           task.link_pr = projectLinkPr
           task.save()
+        notify = Notice.objects.create(deadline=datetime.datetime.now(datetime.timezone.utc), type=Notice.NOTIFICATION,
+                                       projectLinkPr_id=projectLinkPr, user_id=user, seen=False)
+        notify.save()
       else:
         return JsonResponse(genResponseStateInfo(response, 2, "create pr failed"))
     except Exception as e:
       return JsonResponse(genResponseStateInfo(response, 3, str(e)))
-    return JsonResponse(response)
+    return JsonResponse(genResponseStateInfo(response, 0, "create pr success"))
 
 class createBranch(View):
   def post(self, request):
@@ -573,7 +576,7 @@ class createBranch(View):
       return JsonResponse(genResponseStateInfo(response,1, "Duplicated Branch"))
     localpath = repo.local_path
     try:
-      os.system("cd \"" + localpath + "\" && git fetch origin main && git merge origin/main && git branch "
+      os.system("cd \"" + localpath + "\" && git checkout main && git pull && git branch "
                 + name + " && git checkout " + name + " && git push -u origin " + name)
     except Exception:
       return JsonResponse(genResponseStateInfo(response, 2, "os.system error"))
@@ -607,6 +610,7 @@ class GetDiff(View):
     try:
       local_path = Repo.objects.get(remote_path=remote_path).local_path
       cmd = "cd \"" + local_path + "\" && gh pr diff " + ghpr_id
+      print(cmd)
       diff_output = os.popen(cmd).read()
     except Exception:
       return JsonResponse(genResponseStateInfo(response, 4, "os.popen Error"))
@@ -626,12 +630,17 @@ class ApprovePullRequest(View):
     response = {}
     ghpr_id = kwargs['ghpr_id']
     repo_id = kwargs['repo_id']
+    comment = kwargs['comment']
 
     if not Repo.objects.filter(id=repo_id).exists:
       return JsonResponse(genResponseStateInfo(request, 1, "repo not exist"))
 
-    repo = Repo.objects.get(id=repo_id)
+    if not ProjectLinkPr.objects.filter(ghpr_id=ghpr_id).exists:
+      return JsonResponse(genResponseStateInfo(response, 2, "ghpr_id is invalid"))
 
+    repo = Repo.objects.get(id=repo_id)
+    projectLinkPr = ProjectLinkPr.objects.get(ghpr_id=ghpr_id, repo_id=repo)
+    print("Repo : " + str(repo.id))
     try:
       local_path = repo.local_path
       command = (
@@ -642,14 +651,17 @@ class ApprovePullRequest(View):
       result = subprocess.run(command, capture_output=True, shell=True, text=True)
       print(result)
       if result.returncode == 0:
-        tasks_link = Task.objects.filter(link_pr=ghpr_id)
+        tasks_link = Task.objects.filter(link_pr=projectLinkPr)
         for task in tasks_link:
           task.status = Task.COMPLETED
+          task.complete_time = datetime.datetime.now(datetime.timezone.utc)
           task.save()
+          projectLinkPr.comment = comment
+          projectLinkPr.save()
       else:
-        return JsonResponse(genResponseStateInfo(response, 2, "approve pr failed"))
+        return JsonResponse(genResponseStateInfo(response, 3, "approve pr failed"))
     except Exception as e:
-      return JsonResponse(response, 3, str(e))
+      return JsonResponse(response, 4, str(e))
 
     return JsonResponse(genResponseStateInfo(response, 0, "approve pull success"))
 
@@ -664,13 +676,18 @@ class ClosePullRequest(View):
 
     reponse={}
     ghpr_id = kwargs['ghpr_id']
+    repo_id = kwargs['repo_id']
+    comment = kwargs['comment']
+
+    if not Repo.objects.filter(id=repo_id).exists:
+      return JsonResponse(genResponseStateInfo(request, 1, "repo not exist"))
 
     if not ProjectLinkPr.objects.filter(ghpr_id=ghpr_id).exists:
-      return JsonResponse(genResponseStateInfo(response, 1, "ghpr_id is invalid"))
+      return JsonResponse(genResponseStateInfo(response, 2, "ghpr_id is invalid"))
 
-    projectLinkPr = ProjectLinkPr.objects.get(ghpr_id=ghpr_id)
-    repo = projectLinkPr.repo_id
-    print("Repo : " + repo)
+    repo = Repo.objects.get(id=repo_id)
+    projectLinkPr = ProjectLinkPr.objects.get(ghpr_id=ghpr_id, repo_id=repo)
+    print("Repo : " + str(repo.id))
     try:
       local_path = repo.local_path
       print(local_path)
@@ -682,17 +699,19 @@ class ClosePullRequest(View):
       result = subprocess.run(command, capture_output=True, shell=True, text=True)
       print(result)
       if result.returncode == 0 :
-        tasks_link = Task.objects.filter(link_pr=ghpr_id)
+        tasks_link = Task.objects.filter(link_pr=projectLinkPr)
         for task in tasks_link:
           task.status = Task.INPROGRESS
           task.link_pr = None
           task.save()
+          projectLinkPr.comment = comment
+          projectLinkPr.save()
       else :
-        return JsonResponse(genResponseStateInfo(response, 2, "gh pr close failed"))
+        return JsonResponse(genResponseStateInfo(response, 3, "close pr failed"))
     except Exception as e:
-      return  JsonResponse(genResponseStateInfo(reponse, 3, str(e)))
+      return  JsonResponse(genResponseStateInfo(reponse, 4, str(e)))
 
-    return JsonResponse(genResponseStateInfo(reponse, 0, "gh pr close success"))
+    return JsonResponse(genResponseStateInfo(reponse, 0, "close pull success"))
 
 class CreateRepo(View):
   def post(self, request):
@@ -727,7 +746,7 @@ class CreateRepo(View):
       # print("gh repo clone " + remotePath + " " + "\"" + localPath + "\"")
 
     except Exception:
-      return JsonResponse(genResponseStateInfo(response, 2, "os.system error"))
+      return JsonResponse(genResponseStateInfo(response, 4, "os.system error"))
     repo = Repo.objects.create(name=name, local_path=local_path, remote_path=remote_path)
     repo.save()
     userProjectRepo = UserProjectRepo.objects.create(user_id=user_id, project_id=project_id, repo_id=repo.id)
