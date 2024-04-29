@@ -694,7 +694,7 @@ class notice(View):
 
         msg = Notice.objects.create(belongingTask_id=taskId,
                                     deadline=datetime.datetime(year=year, month=month, day=day, hour=hour,
-                                                               minute=minute))
+                                                               minute=minute), type=Notice.ALARM)
         msg.save()
         response['errcode'] = 0
         response['message'] = "success"
@@ -721,15 +721,21 @@ class showNoticeList(View):
         taskList = Task.objects.filter(project_id_id=projectId)
         data = []
         for i in taskList:
-            notices = Notice.objects.filter(belongingTask=i)
+            notices = Notice.objects.filter(belongingTask=i).order_by('-deadline')
             for j in notices:
-                sub_tmp = {"noticeId": j.id, "taskId": i.id, "deadline": j.deadline}
+                sub_tmp = {"noticeId": j.id, "taskId": i.id, "deadline": j.deadline,
+                           "type": j.type, "user_id": j.user_id}
                 data.append(sub_tmp)
         response['errcode'] = 0
         response['message'] = "success"
         response['data'] = data
 
         return JsonResponse(response)
+
+# TODO: 将通知标记为已读
+class seenNotice(View):
+    def post (self, request):
+        return JsonResponse(request)
 
 
 class modifyNotice(View):
