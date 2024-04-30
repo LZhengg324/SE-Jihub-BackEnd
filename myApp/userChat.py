@@ -42,12 +42,18 @@ def get_user_public_groups(request):
                 'roomId': group.id,
                 'roomName': group.name,
                 'outline': group.outline,
+<<<<<<< HEAD
                 'users': [
                     {
                         'userId': asso.user.id,
                         'userName': asso.user.name
                     } for asso in UserGroup.objects.filter(group = group)
                 ]
+=======
+                'time': group.time,
+                'unReadNums': calUnReadNums(userId, group.id),
+                'users': users
+>>>>>>> d7c7adb542bed10bc9e583ab7065578243a00b89
             })
 
     return response_json(
@@ -70,10 +76,60 @@ def get_user_private_groups(request):
         if group.type == 'PRI' and group.project_id == projectId:
             privates.append({
                 'roomId': group.id,
+<<<<<<< HEAD
                 'roomName': group.name,
                 'outline': group.outline
+=======
+                'targetUserId': targetUserId,
+                'targetUserName': targetUserName,
+                'unReadNums': calUnReadNums(userId, group.id),
+                'time': group.time
+>>>>>>> d7c7adb542bed10bc9e583ab7065578243a00b89
             })
 
+<<<<<<< HEAD
+=======
+    projectId = int(kwargs.get('projectId'))
+    userId = int(kwargs.get('currentUserId'))
+
+    discussions = get_pub_rooms(userId, projectId)
+    privates = get_pri_rooms(userId, projectId)
+
+    rooms = []
+    for dis in discussions:
+        rooms.append({
+            'roomId': dis['roomId'],
+            'roomName': dis['roomName'],
+            'roomType': 'PUB',
+            'outline': dis['outline'],
+            'unReadNums': dis['unReadNums'],
+            'users': dis['users'],
+            'time': dis['time']
+        })
+    for pri in privates:
+        users = []
+        users.append({
+            'userId': userId,
+            'userName': User.objects.get(id=userId).name,
+            'role': 'A'
+        })
+        users.append({
+            'userId': pri['targetUserId'],
+            'userName': pri['targetUserName'],
+            'role': 'A'
+        })
+        rooms.append({
+            'roomId': pri['roomId'],
+            'roomName': pri['targetUserName'],
+            'roomType': 'PRI',
+            'outline': '',
+            'unReadNums': pri['unReadNums'],
+            'users': users,
+            'time': pri['time']
+        })
+
+    rooms.sort(key=lambda room: room['time'], reverse=True)
+>>>>>>> d7c7adb542bed10bc9e583ab7065578243a00b89
     return response_json(
         errcode = SUCCESS,
         data = {

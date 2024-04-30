@@ -64,6 +64,25 @@ class Project(models.Model):
     manager_id = models.ForeignKey(User, on_delete=models.CASCADE)
 
 
+<<<<<<< HEAD
+=======
+class Repo(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=255)
+    local_path = models.CharField(max_length=255)  # TODO
+    remote_path = models.CharField(max_length=255)
+
+
+class ProjectLinkPr(models.Model):
+    id = models.AutoField(primary_key=True)
+    ghpr_id = models.IntegerField()
+    repo_id = models.ForeignKey(Repo, on_delete=models.CASCADE)
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    project_id = models.ForeignKey(Project, on_delete=models.CASCADE)
+    comment = models.TextField(default="No comment")
+
+
+>>>>>>> d7c7adb542bed10bc9e583ab7065578243a00b89
 class Task(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
@@ -99,13 +118,24 @@ class Group(models.Model):
     (PUBLIC, 'PUBLIC')
     )
     type          = models.CharField(max_length=5, choices=TYPE_LIST)
+    time = models.DateTimeField(auto_now_add=True)
 
 
 class Notice(models.Model):
     id = models.AutoField(primary_key=True)
-    belongingTask = models.ForeignKey(Task, on_delete=models.CASCADE)
-    deadline = models.DateTimeField()
+    belongingTask = models.ForeignKey(Task, on_delete=models.CASCADE, null=True, blank=True)
+    deadline = models.DateTimeField()   # 如果type是A，deadline就是notice创建的时间；如果type是B，deadline就是alarm提醒的时间
     content = models.TextField()
+    NOTIFICATION = 'A'
+    ALARM = 'B'
+    TYPE_LIST = (
+        (NOTIFICATION, 'NOTIFICATION'),
+        (ALARM, 'ALARM')
+    )
+    type = models.CharField(max_length=5, choices=TYPE_LIST, default=ALARM)
+    projectLinkPr_id = models.ForeignKey(ProjectLinkPr, on_delete=models.CASCADE, null=True, blank=True)
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)  # 要通知的人
+    seen = models.BooleanField(default=False)
 
 
 class MyFile(models.Model):
