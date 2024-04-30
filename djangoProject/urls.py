@@ -43,6 +43,16 @@ urlpatterns = [
     path('api/management/getUserNum', manager.GetUserNum.as_view()),
     path('api/management/getProjectNum', manager.GetProjectNum.as_view()),
     path('api/management/getProjectsScale', manager.GetProjectScale.as_view()),
+
+    ####                           新增部分                                 ####
+    path('api/management/getProjectUsers', manager.GetProjectUsers.as_view()),
+    path('api/management/showAssistants', manager.ShowAssistants.as_view()),
+    path('api/management/getProjectAssistants', manager.GetProjectAssistants.as_view()),
+    path('api/management/changeUserUploadAccess', manager.ChangeUserUploadAccess.as_view()),
+    path('api/management/setAssistantAccess', manager.SetAssistantAccess.as_view()),
+    #############################################################################
+
+
     path('api/develop/getProjectName', userdevelop.GetProjectName.as_view()),
     path('api/develop/getBindRepos', userdevelop.GetBindRepos.as_view()),
     path('api/develop/userBindRepo', userdevelop.UserBindRepo.as_view()),
