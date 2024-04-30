@@ -214,12 +214,14 @@ class UserProject(models.Model):
     NORMAL = 'A'
     ADMIN = 'B'
     DEVELOPER = "C"
+    ASSISTANT = "D" ## 4.30 新增
     ROLE_LIST = (
         (NORMAL, 'NORMAL'),
         (ADMIN, 'ADMIN'),
         (DEVELOPER, 'DEVELOPER'),
+        (ASSISTANT, 'ASSISTANT'),
     )
-    role = models.CharField(max_length=3, choices=ROLE_LIST)
+    role = models.CharField(max_length=4, choices=ROLE_LIST)
 
     # NORMAL = 'A'
     # ILLEGAL = 'B'

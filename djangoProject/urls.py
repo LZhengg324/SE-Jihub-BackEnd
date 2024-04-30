@@ -49,7 +49,7 @@ urlpatterns = [
     path('api/management/showAssistants', manager.ShowAssistants.as_view()),
     path('api/management/getProjectAssistants', manager.GetProjectAssistants.as_view()),
     path('api/management/changeUserUploadAccess', manager.ChangeUserUploadAccess.as_view()),
-    path('/api/management/setAssistantAccess', manager.SetAssistantAccess.as_view()),
+    path('api/management/setAssistantAccess', manager.SetAssistantAccess.as_view()),
     #############################################################################
 
     path('api/develop/getProjectName', userdevelop.GetProjectName.as_view()),
