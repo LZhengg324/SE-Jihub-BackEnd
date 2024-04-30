@@ -9,6 +9,7 @@ class User(models.Model):
     password = models.CharField(max_length=255)
     create_time = models.DateTimeField(auto_now_add=True)
     last_login_time = models.DateTimeField()
+    last_login_ip = models.CharField(max_length=255)
     NORMAL = 'A'
     ILLEGAL = 'B'
     ADMIN = 'C'
@@ -33,6 +34,7 @@ class User(models.Model):
     )
     color  = models.CharField(max_length=10, choices=COLOR_LIST)
     status = models.CharField(max_length=2, choices=STATUS_LIST)
+
 
 
 class Project(models.Model):
