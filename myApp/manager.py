@@ -32,7 +32,12 @@ def isAssistant(userId):
   except Exception as e:
     return False
   
-  
+def ableToBeAssistant(userId):
+  if UserProject.objects.filter(user_id_id=userId).exists():
+      return False
+  else:
+      return True
+
 def genRandStr(randLength=6):
   randStr = ''
   baseStr = 'ABCDEFGHIGKLMNOPORSTUVWXYZabcdefghigklmnopqrstuvwxyz0123456789'
@@ -106,8 +111,13 @@ class ChangeUserStatus(View):
     changeToStatus = kwargs.get('changeToStatus')
     user = User.objects.get(id=userId)
     userName = user.name
+
     if user.status == changeToStatus:
       return JsonResponse(genResponseStateInfo(response, 2, "no need change"))
+
+    if changeToStatus == 'D' and not ableToBeAssistant(userId):
+      return JsonResponse(genResponseStateInfo(response, 3, "user is in other project"))
+
     user.status = changeToStatus
     user.save()
     response["name"] = userName
@@ -281,7 +291,7 @@ class GetProjectScale(View):
     response = {}
     genResponseStateInfo(response, 0, "get numbers of different scale projects ok")
     managerId = kwargs.get('managerId')
-    if not isAdmin(managerId):
+    if not isAdmin(managerId) and not isAssistant(managerId):
       return JsonResponse(genResponseStateInfo(response, 1, "Insufficient authority"))
     tiny = 0
     small = 0
@@ -326,13 +336,14 @@ class  GetProjectUsers(View):
     users = []
     
     for user in userList:
-      users.append({
-          "peopleId": user.user_id.id,
-          "peopleName": user.user_id.name,
-          "peopleEmail": user.user_id.email,
-          "peopleActive": 1,
-          "peopleStatus": user.user_id.status,
-          })
+      if user.role != UserProject.ASSISTANT and user.role != UserProject.ADMIN:
+        users.append({
+            "peopleId": user.user_id.id,
+            "peopleName": user.user_id.name,
+            "peopleEmail": user.user_id.email,
+            "peopleActive": 1,
+            "peopleStatus": user.user_id.status,
+            })
     # if isAdmin(managerId):
     response["users"] = users
     return JsonResponse(response)
@@ -386,35 +397,23 @@ class GetProjectAssistants(View):
     except Exception:
       return JsonResponse(response)
     response = {}
-    genResponseStateInfo(response, 0, "get assistants of project ok")
     
     projectId = kwargs.get('projectId')
     managerId = kwargs.get('managerId')
     if not isAdmin(managerId):
       return JsonResponse(genResponseStateInfo(response, 1, "Insufficient authority"))
-    
-    userProjects = UserProject.objects.all()
-    allUsers = User.objects.all()
+
     assistants = []
-    for userProject in userProjects:
-      # if userProject.role != "ADMIN":
-        # continue
-      if userProject.project_id.id != projectId:
-        continue
-
-      for assistant in allUsers:
-        if assistant.id == userProject.user_id.id :
-          print(assistant.status)
-          if userProject.role != "ASSISTANT":
-            continue
-
-          assistants.append({
-                          "name": assistant.name,
-                          "email":  assistant.email,
-                          "id": assistant.id,
-                        })
+    assistantsInProject = UserProject.objects.filter(project_id=projectId, role=UserProject.ASSISTANT)
+    for assistant in assistantsInProject:
+      user = User.objects.get(id=assistant.user_id_id)
+      assistants.append({
+        "name": user.name,
+        "email": user.email,
+        "id": user.id,
+      })
     response["assistants"] = assistants
-    return JsonResponse(response)
+    return JsonResponse(genResponseStateInfo(response, 0, "get assistants of project ok"))
 
 class ChangeUserUploadAccess(View):
   def post(self, request):
@@ -451,7 +450,6 @@ class SetAssistantAccess(View):
     except Exception:
       return JsonResponse(response)
     response = {}
-    genResponseStateInfo(response, 0, "change status ok")
     managerId = kwargs.get('managerId')
     if not isAdmin(managerId):
       return JsonResponse(genResponseStateInfo(response, 1, "Insufficient authority"))
@@ -459,16 +457,24 @@ class SetAssistantAccess(View):
     projectId = kwargs.get('projectId')
     print(assistantsId)
     print(projectId)
-    allUserProjects = UserProject.objects.all()
-    for userProject in allUserProjects:
-      for assistantId in assistantsId:
-        # print(userProject.user_id.id)
-        # print(assistantId)
-        if userProject.user_id.id == assistantId:
-          if userProject.role == "ASSISTANT" and userProject.project_id == projectId:
-            continue
-          userProject.role = "ASSISTANT"
-          userProject.save()
+    old_assistants = UserProject.objects.filter(project_id_id=projectId, role=UserProject.ASSISTANT)
+    for old_assistant in old_assistants:
+      old_assistant.delete()
+
+    for assistant in assistantsId:
+      userProject = UserProject.objects.create(role=UserProject.ASSISTANT,
+                                               project_id_id=projectId, user_id_id=assistant)
+      userProject.save()
+
+    # for userProject in allUserProjects:
+    #   for assistantId in assistantsId:
+    #     # print(userProject.user_id.id)
+    #     # print(assistantId)
+    #     if userProject.user_id.id == assistantId:
+    #       if userProject.role == "ASSISTANT" and userProject.project_id == projectId:
+    #         continue
+    #       userProject.role = "ASSISTANT"
+    #       userProject.save()
         # newUserProject = UserProject(user_id=assistantId,
         #                          project_id = projectId,
         #                          role = "ASSISTANT")
@@ -476,7 +482,7 @@ class SetAssistantAccess(View):
     # allUserProjects.save()
     response["assistant"] = assistantsId
     response["project"] = projectId
-    return JsonResponse(response)
+    return JsonResponse(genResponseStateInfo(response, 0, "set Assistant Access success"))
   
 
 

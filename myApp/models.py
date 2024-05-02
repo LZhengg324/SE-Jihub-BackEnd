@@ -9,7 +9,7 @@ class User(models.Model):
     password = models.CharField(max_length=255)
     create_time = models.DateTimeField(auto_now_add=True)
     last_login_time = models.DateTimeField()
-    last_login_ip = models.CharField(max_length=255)
+    last_login_ip = models.CharField(max_length=255, null=True, blank=True, default=None)
     NORMAL = 'A'
     ILLEGAL = 'B'
     ADMIN = 'C'
@@ -237,10 +237,14 @@ class UserProject(models.Model):
     NORMAL = 'A'
     ADMIN = 'B'
     DEVELOPER = "C"
+    ASSISTANT = "D"
+    ILLEGAL = "E"
     ROLE_LIST = (
         (NORMAL, 'NORMAL'),
         (ADMIN, 'ADMIN'),
         (DEVELOPER, 'DEVELOPER'),
+        (ASSISTANT, 'ASSISTANT'),
+        (ILLEGAL, 'ILLEGAL'),
     )
     role = models.CharField(max_length=3, choices=ROLE_LIST)
 

@@ -545,8 +545,10 @@ class CreatePullRequest(View):
           task.status = Task.REVIEWING
           task.link_pr = projectLinkPr
           task.save()
+        content = ('"{}" 提交了一个新的 Pull Request'.format(user.name))
+        notify_people = User.objects.get(id=project.manager_id_id)
         notify = Notice.objects.create(deadline=datetime.datetime.now(datetime.timezone.utc), type=Notice.NOTIFICATION,
-                                       projectLinkPr_id=projectLinkPr, user_id=user, seen=False)
+                                       projectLinkPr_id=projectLinkPr, user_id=notify_people, seen=False, content = content)
         notify.save()
       else:
         return JsonResponse(genResponseStateInfo(response, 2, "create pr failed"))
@@ -656,8 +658,13 @@ class ApprovePullRequest(View):
           task.status = Task.COMPLETED
           task.complete_time = datetime.datetime.now(datetime.timezone.utc)
           task.save()
-          projectLinkPr.comment = comment
-          projectLinkPr.save()
+        projectLinkPr.comment = comment
+        projectLinkPr.save()
+        user = User.objects.get(id=projectLinkPr.user_id_id)
+        content = ('您提交的Pull Request —— #{} 项目负责人已通过'.format(projectLinkPr.ghpr_id))
+        notify = Notice.objects.create(deadline=datetime.datetime.now(datetime.timezone.utc), type=Notice.NOTIFICATION,
+                                       projectLinkPr_id=projectLinkPr, user_id=user, seen=False, content=content)
+        notify.save()
       else:
         return JsonResponse(genResponseStateInfo(response, 3, "approve pr failed"))
     except Exception as e:
@@ -704,8 +711,13 @@ class ClosePullRequest(View):
           task.status = Task.INPROGRESS
           task.link_pr = None
           task.save()
-          projectLinkPr.comment = comment
-          projectLinkPr.save()
+        projectLinkPr.comment = comment
+        projectLinkPr.save()
+        user = User.objects.get(id=projectLinkPr.user_id_id)
+        content = ('您提交的Pull Request —— #{}已被项目负责人拒绝'.format(projectLinkPr.ghpr_id))
+        notify = Notice.objects.create(deadline=datetime.datetime.now(datetime.timezone.utc), type=Notice.NOTIFICATION,
+                                       projectLinkPr_id=projectLinkPr, user_id=user, seen=False, content=content)
+        notify.save()
       else :
         return JsonResponse(genResponseStateInfo(response, 3, "close pr failed"))
     except Exception as e:

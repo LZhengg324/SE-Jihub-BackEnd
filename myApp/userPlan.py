@@ -493,12 +493,13 @@ class showPersonList(View):
         personList = UserProject.objects.filter(project_id_id=projectId)
         res = []
         for person in personList:
-            res.append({
-                "peopleId": person.user_id.id,
-                "peopleName": person.user_id.name,
-                "peopleJob": person.role,
-                "peopleEmail": person.user_id.email,
-            })
+            if person.role != UserProject.ASSISTANT and person.role != UserProject.ADMIN:
+                res.append({
+                    "peopleId": person.user_id.id,
+                    "peopleName": person.user_id.name,
+                    "peopleJob": person.role,
+                    "peopleEmail": person.user_id.email,
+                })
 
         response['errcode'] = 0
         response['message'] = "success"
@@ -529,7 +530,8 @@ class modifyRole(View):
             return JsonResponse(response)
 
         role = kwargs.get("role", "")
-        if role not in [UserProject.ADMIN, UserProject.NORMAL, UserProject.DEVELOPER]:
+        if role not in [UserProject.ADMIN, UserProject.NORMAL, UserProject.DEVELOPER,
+                        UserProject.ASSISTANT, UserProject.ILLEGAL]:
             response['errcode'] = 1
             response['message'] = "role not exist"
             response['data'] = None
