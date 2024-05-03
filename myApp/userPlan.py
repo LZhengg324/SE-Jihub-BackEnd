@@ -737,7 +737,25 @@ class showNoticeList(View):
 # TODO: 将通知标记为已读
 class seenNotice(View):
     def post (self, request):
-        return JsonResponse(request)
+        response = {'errcode': 1, 'message': "404 not success"}
+        try:
+            kwargs: dict = json.loads(request.body)
+        except Exception:
+            return JsonResponse(response)
+
+        noticeId = kwargs.get("id", -1)
+
+        if not Notice.objects.filter(id=noticeId).exists():
+            response['errcode'] = 2
+            response['message'] = "no such notice id"
+            return JsonResponse(response)
+
+        notice = Notice.objects.get(id=noticeId)
+        notice.seen = True
+        notice.save()
+        response['errcode'] = 0
+        response['message'] = "seen notice success"
+        return JsonResponse(response)
 
 
 class modifyNotice(View):
