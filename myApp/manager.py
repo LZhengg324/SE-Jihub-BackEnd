@@ -349,7 +349,7 @@ class  GetProjectUsers(View):
             "peopleName": user.user_id.name,
             "peopleEmail": user.user_id.email,
             "peopleActive": 1,
-            "peopleStatus": user.user_id.status,
+            "peopleStatus": user.role,
             })
     # if isAdmin(managerId):
     response["users"] = users
