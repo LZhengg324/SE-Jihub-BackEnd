@@ -169,14 +169,15 @@ class ShowAllProjects(View):
                         "email" : leader.email, "createTime" : project.create_time,
                         "progress" : project.progress, "status" : project.status,
                         "access" : project.access})
-    else:
+    else: # 不是admin表示是assistant
       assistant = User.objects.get(id=managerId)
-      assistantProject = UserProject.objects.filter(user_id_id=managerId)
+      assistantProject = UserProject.objects.filter(user_id_id=assistant.id)
       for project in assistantProject:
         p = Project.objects.get(id=project.project_id_id)
+        leader = User.objects.get(id = p.manager_id_id)
         projects.append({"name": p.name, "projectId": p.id,
-                         "leader": assistant.name, "leaderId": assistant.id,
-                         "email": assistant.email, "createTime": p.create_time,
+                         "leader": leader.name, "leaderId": leader.id,
+                         "email": leader.email, "createTime": p.create_time,
                          "progress": p.progress, "status": p.status,
                          "access": p.access})
     response["projects"] = projects
