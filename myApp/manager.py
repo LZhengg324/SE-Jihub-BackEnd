@@ -58,7 +58,7 @@ class ShowUsers(View):
     genResponseStateInfo(response, 0, "get users ok")
     users = []
     managerId = kwargs.get('managerId')
-    if not isAdmin(managerId):
+    if not isAdmin(managerId) and not isAssistant(managerId):
       return JsonResponse(genResponseStateInfo(response, 1, "Insufficient authority"))
     allUsers = User.objects.all()
     for user in allUsers:
@@ -160,18 +160,25 @@ class ShowAllProjects(View):
     if not isAdmin(managerId) and not isAssistant(managerId):  
       return JsonResponse(genResponseStateInfo(response, 1, "Insufficient authority"))
     projects = []
-    allProjects = Project.objects.all()
-    for project in allProjects:
-      leader = User.objects.get(id=project.manager_id.id)
-      if isAssistant(managerId) :
-        if leader.id != managerId:
-          continue
-      projects.append({"name" : project.name, "projectId" : project.id,
-                       "leader" : leader.name, "leaderId" : leader.id,
-                      "email" : leader.email, "createTime" : project.create_time,
-                      "progress" : project.progress, "status" : project.status, 
-                      "access" : project.access})
-    
+    if isAdmin(managerId):
+      allProjects = Project.objects.all()
+      for project in allProjects:
+        leader = User.objects.get(id=project.manager_id.id)
+        projects.append({"name" : project.name, "projectId" : project.id,
+                         "leader" : leader.name, "leaderId" : leader.id,
+                        "email" : leader.email, "createTime" : project.create_time,
+                        "progress" : project.progress, "status" : project.status,
+                        "access" : project.access})
+    else:
+      assistant = User.objects.get(id=managerId)
+      assistantProject = UserProject.objects.filter(user_id_id=managerId)
+      for project in assistantProject:
+        p = Project.objects.get(id=project.project_id_id)
+        projects.append({"name": p.name, "projectId": p.id,
+                         "leader": assistant.name, "leaderId": assistant.id,
+                         "email": assistant.email, "createTime": p.create_time,
+                         "progress": p.progress, "status": p.status,
+                         "access": p.access})
     response["projects"] = projects
     return JsonResponse(response)
     
@@ -234,7 +241,7 @@ class ShowUsersLogin(View):
     response = {}
     genResponseStateInfo(response, 0, "get login messages ok")
     managerId = kwargs.get('managerId')
-    if not isAdmin(managerId):
+    if not isAdmin(managerId) and not isAssistant(managerId):
       return JsonResponse(genResponseStateInfo(response, 1, "Insufficient authority"))
     loginMessages = []
     allUsers = User.objects.all()
@@ -259,7 +266,7 @@ class GetUserNum(View):
     response = {}
     genResponseStateInfo(response, 0, "get users num ok")
     managerId = kwargs.get('managerId')
-    if not isAdmin(managerId):
+    if not isAdmin(managerId) and not isAssistant(managerId):
       return JsonResponse(genResponseStateInfo(response, 1, "Insufficient authority"))
     response["userSum"] = User.objects.count()
     return JsonResponse(response)
@@ -275,7 +282,7 @@ class GetProjectNum(View):
     response = {}
     genResponseStateInfo(response, 0, "get projects num ok")
     managerId = kwargs.get('managerId')
-    if not isAdmin(managerId):
+    if not isAdmin(managerId) and not isAssistant(managerId):
       return JsonResponse(genResponseStateInfo(response, 1, "Insufficient authority"))
     response["projectSum"] = Project.objects.count()
     return JsonResponse(response)
