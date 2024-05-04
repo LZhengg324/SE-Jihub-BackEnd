@@ -11,6 +11,7 @@ import shutil
 import sys
 import subprocess
 import json5
+import pytz
 
 repo_semaphore = {}
 def getSemaphore(repoId):
@@ -656,7 +657,12 @@ class ApprovePullRequest(View):
         tasks_link = Task.objects.filter(link_pr=projectLinkPr)
         for task in tasks_link:
           task.status = Task.COMPLETED
-          task.complete_time = datetime.datetime.now(datetime.timezone.utc)
+          cur_date = datetime.date.today()
+          cur_y, cur_m, cur_d = int(cur_date.year), int(cur_date.month), int(cur_date.day)
+          cur_time = datetime.datetime.now().time()
+          cur_hour, cur_min, cur_sec = int(cur_time.hour), int(cur_time.minute), int(cur_time.second)
+          task.complete_time = datetime.datetime(year=cur_y, month=cur_m, day=cur_d, hour=cur_hour,
+                                                 minute=cur_min, second=cur_sec, tzinfo=pytz.utc)
           task.save()
         projectLinkPr.comment = comment
         projectLinkPr.save()
