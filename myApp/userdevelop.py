@@ -768,17 +768,63 @@ class CreateRepo(View):
     if not isUserInProject(user_id, project_id):
       return JsonResponse(genResponseStateInfo(response, 3, "user not in project"))
     try:
-      #cd \"" + local_path + "\" &&
       print("gh repo create " + name + "_" + str(project_id) + " --public")
       os.system("gh repo create " + name + "_" + str(project_id) + " --public")
       print("---------------")
-      # os.system("gh repo clone " + remotePath + " " + "\"" + localPath + "\"")
-      # print("gh repo clone " + remotePath + " " + "\"" + localPath + "\"")
+      original_directory = os.getcwd()
+
+      # 改变当前工作目录到repoTemp
+      os.chdir("repoTemp")
+      # 在repoTemp目录下创建一个新目录
+      os.mkdir(name + "_" + str(project_id))
+      os.chdir(name + "_" + str(project_id))
+      op = "echo \"# " + name + "\""+" >> README.md && "\
+           + "git init && git add README.md && "\
+           + "git commit -m \"first commit\" && " + "git branch -M main && "\
+           + "git remote add origin " + remote_path + name + "_" + str(project_id) + ".git && "\
+           + "git push -u origin main"
+      print(op)
+      os.system(op)
+
+      # 返回到之前的工作目录
+      os.chdir(original_directory)
 
     except Exception:
-      return JsonResponse(genResponseStateInfo(response, 4, "os.system error"))
-    repo = Repo.objects.create(name=name, local_path=local_path, remote_path=remote_path)
-    repo.save()
-    userProjectRepo = UserProjectRepo.objects.create(user_id=user_id, project_id=project_id, repo_id=repo.id)
-    userProjectRepo.save()
+      return JsonResponse(genResponseStateInfo(response, 2, "os.system error"))
+    # repo = Repo.objects.create(name=name, local_path=local_path, remote_path=remote_path)
+    # repo.save()
+    # userProjectRepo = UserProjectRepo.objects.create(user_id=user_id, project_id=project_id, repo_id=repo.id)
+    # userProjectRepo.save()
     return JsonResponse(genResponseStateInfo(response, 0, "Repo created successfully"))
+
+
+# class CreateMainBranch(View):
+#   def post(self, request):
+#     DBG("---- in " + sys._getframe().f_code.co_name + " ----")
+#     response = {'message': "404 not success", "errorcode": -1}
+#     try:
+#       kwargs:dict = json.loads(request.body)
+#     except Exception:
+#       return JsonResponse(response)
+#     response = {}
+#     repo_name = kwargs.get('repo_name')
+#     repo = Repo.objects.get(repo_name)
+#     remote_path = kwargs.get('remote_path')
+#     # remote_path = repo.remote_path
+#     local_path = repo.local_path
+#     print("local_path : " + local_path)
+#     print("remote_path : " + remote_path)
+#
+#     try:
+#       #cd \"" + local_path + "\" &&
+#       op = "cd " + local_path + "\necho # " + repo_name + \
+#            ">> README.md\n" + "git add README.md\n" + \
+#             "git commit -m \"first commit\"0\n" + "git branch -M main\n" + \
+#            "git remote add origin " + remote_path + \
+#            "\ngit push -u origin main"
+#       print(op)
+#       os.system(op)
+#
+#     except Exception:
+#       return JsonResponse(genResponseStateInfo(response, 2, "os.system error"))
+#     return JsonResponse(genResponseStateInfo(response, 0, "Repo created successfully"))
