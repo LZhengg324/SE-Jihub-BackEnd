@@ -11,6 +11,7 @@ import shutil
 import sys
 import subprocess
 import json5
+import pytz
 
 repo_semaphore = {}
 def getSemaphore(repoId):
@@ -610,15 +611,27 @@ class GetDiff(View):
       return JsonResponse(genResponseStateInfo(response, 3, "user not in project"))
 
     try:
-      local_path = Repo.objects.get(remote_path=remote_path).local_path
+      repo = Repo.objects.get(remote_path=remote_path)
+      projectLinkPr = ProjectLinkPr.objects.get(ghpr_id=ghpr_id, project_id_id=project_id, repo_id_id=repo.id)
+      local_path = repo.local_path
       cmd = "cd \"" + local_path + "\" && gh pr diff " + ghpr_id
       print(cmd)
       diff_output = os.popen(cmd).read()
+      result = subprocess.run(['gh', 'pr', 'view', str(ghpr_id), '--json', 'title,body'], cwd=local_path,
+                              capture_output=True, text=True)
+      print(result)
+      if result.returncode == 0:
+        pr_info = json.loads(result.stdout)
+        title = pr_info['title']
+        description = pr_info['body']
     except Exception:
       return JsonResponse(genResponseStateInfo(response, 4, "os.popen Error"))
 
     genResponseStateInfo(response, 0, "gh pr diff success")
     response['diff_output'] = diff_output
+    response['title'] = title
+    response['description'] = description
+    response['comment'] = projectLinkPr.comment
     return JsonResponse(response)
 
 class ApprovePullRequest(View):
@@ -656,7 +669,12 @@ class ApprovePullRequest(View):
         tasks_link = Task.objects.filter(link_pr=projectLinkPr)
         for task in tasks_link:
           task.status = Task.COMPLETED
-          task.complete_time = datetime.datetime.now(datetime.timezone.utc)
+          cur_date = datetime.date.today()
+          cur_y, cur_m, cur_d = int(cur_date.year), int(cur_date.month), int(cur_date.day)
+          cur_time = datetime.datetime.now().time()
+          cur_hour, cur_min, cur_sec = int(cur_time.hour), int(cur_time.minute), int(cur_time.second)
+          task.complete_time = datetime.datetime(year=cur_y, month=cur_m, day=cur_d, hour=cur_hour,
+                                                 minute=cur_min, second=cur_sec, tzinfo=pytz.utc)
           task.save()
         projectLinkPr.comment = comment
         projectLinkPr.save()
