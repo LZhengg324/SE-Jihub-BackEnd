@@ -43,6 +43,16 @@ urlpatterns = [
     path('api/management/getUserNum', manager.GetUserNum.as_view()),
     path('api/management/getProjectNum', manager.GetProjectNum.as_view()),
     path('api/management/getProjectsScale', manager.GetProjectScale.as_view()),
+
+    ####                           新增部分                                 ####
+    path('api/management/getProjectUsers', manager.GetProjectUsers.as_view()),
+    path('api/management/showAssistants', manager.ShowAssistants.as_view()),
+    path('api/management/getProjectAssistants', manager.GetProjectAssistants.as_view()),
+    path('api/management/changeUserUploadAccess', manager.ChangeUserUploadAccess.as_view()),
+    path('api/management/setAssistantAccess', manager.SetAssistantAccess.as_view()),
+    #############################################################################
+
+
     path('api/develop/getProjectName', userdevelop.GetProjectName.as_view()),
     path('api/develop/getBindRepos', userdevelop.GetBindRepos.as_view()),
     path('api/develop/userBindRepo', userdevelop.UserBindRepo.as_view()),
@@ -86,6 +96,7 @@ urlpatterns = [
     path('api/plan/modifyProjectStatus', userPlan.modifyProjectStatus.as_view()),
     path('api/plan/showNoticeList', userPlan.showNoticeList.as_view()),
     path('api/plan/modifyNotice', userPlan.modifyNotice.as_view()),
+    path('api/plan/seenNotice', userPlan.seenNotice.as_view()),
     path('api/plan/removeNotice', userPlan.removeNotice.as_view()),
     path('api/echo', debug.echo),
     path('api/notice/userPostNoticeToAll', notice.UserPostNoticeToAll.as_view()),
@@ -122,6 +133,7 @@ urlpatterns = [
     path('api/plan/ProjectInfo',userPlan.ProjectInfo.as_view()),
     path('api/file/uploadFile',file.uploadFile.as_view()),
     path('api/file/downloadFile',file.downloadFile.as_view()),
+    path('api/file/deleteFile', file.deleteFile.as_view()),
     path('api/file/watchFiles',file.watchFiles.as_view()),
     path('api/mailTest', mail.MailTest.as_view()),
 ]

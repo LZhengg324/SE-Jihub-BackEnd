@@ -493,12 +493,13 @@ class showPersonList(View):
         personList = UserProject.objects.filter(project_id_id=projectId)
         res = []
         for person in personList:
-            res.append({
-                "peopleId": person.user_id.id,
-                "peopleName": person.user_id.name,
-                "peopleJob": person.role,
-                "peopleEmail": person.user_id.email,
-            })
+            if person.role != UserProject.ASSISTANT and person.role != UserProject.ADMIN:
+                res.append({
+                    "peopleId": person.user_id.id,
+                    "peopleName": person.user_id.name,
+                    "peopleJob": person.role,
+                    "peopleEmail": person.user_id.email,
+                })
 
         response['errcode'] = 0
         response['message'] = "success"
@@ -529,7 +530,8 @@ class modifyRole(View):
             return JsonResponse(response)
 
         role = kwargs.get("role", "")
-        if role not in [UserProject.ADMIN, UserProject.NORMAL, UserProject.DEVELOPER]:
+        if role not in [UserProject.ADMIN, UserProject.NORMAL, UserProject.DEVELOPER,
+                        UserProject.ASSISTANT, UserProject.ILLEGAL]:
             response['errcode'] = 1
             response['message'] = "role not exist"
             response['data'] = None
@@ -694,7 +696,7 @@ class notice(View):
 
         msg = Notice.objects.create(belongingTask_id=taskId,
                                     deadline=datetime.datetime(year=year, month=month, day=day, hour=hour,
-                                                               minute=minute))
+                                                               minute=minute), type=Notice.ALARM)
         msg.save()
         response['errcode'] = 0
         response['message'] = "success"
@@ -721,14 +723,38 @@ class showNoticeList(View):
         taskList = Task.objects.filter(project_id_id=projectId)
         data = []
         for i in taskList:
-            notices = Notice.objects.filter(belongingTask=i)
+            notices = Notice.objects.filter(belongingTask=i).order_by('-deadline')
             for j in notices:
-                sub_tmp = {"noticeId": j.id, "taskId": i.id, "deadline": j.deadline}
+                sub_tmp = {"noticeId": j.id, "taskId": i.id, "deadline": j.deadline,
+                           "type": j.type, "user_id": j.user_id}
                 data.append(sub_tmp)
         response['errcode'] = 0
         response['message'] = "success"
         response['data'] = data
 
+        return JsonResponse(response)
+
+# TODO: 将通知标记为已读
+class seenNotice(View):
+    def post (self, request):
+        response = {'errcode': 1, 'message': "404 not success"}
+        try:
+            kwargs: dict = json.loads(request.body)
+        except Exception:
+            return JsonResponse(response)
+
+        noticeId = kwargs.get("id", -1)
+
+        if not Notice.objects.filter(id=noticeId).exists():
+            response['errcode'] = 2
+            response['message'] = "no such notice id"
+            return JsonResponse(response)
+
+        notice = Notice.objects.get(id=noticeId)
+        notice.seen = True
+        notice.save()
+        response['errcode'] = 0
+        response['message'] = "seen notice success"
         return JsonResponse(response)
 
 
