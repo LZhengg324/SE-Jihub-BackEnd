@@ -685,6 +685,8 @@ class notice(View):
         taskId = kwargs.get("taskId", -1)
         deadline = kwargs.get("deadline", "")
         project_id = kwargs.get("project_id", -1)
+        user_id = kwargs.get("user_id", -1)
+
         year, month, day, hour, minute = deadline.split("-")
         year = int(year)
         month = int(month)
@@ -696,10 +698,11 @@ class notice(View):
             response['message'] = "task not exist"
             response['data'] = None
             return JsonResponse(response)
-        project = Project.objects.get(id=project_id)
+        project = Project.objects.get(id=int(project_id))
+        user = User.objects.get(id=int(user_id))
         msg = Notice.objects.create(belongingTask_id=taskId,
-                                    deadline=datetime.datetime(year=year, month=month, day=day, hour=hour,
-                                                               minute=minute), type=Notice.ALARM, project_id=project)
+                                    deadline=datetime.datetime(year=year, month=month, day=day, hour=hour, minute=minute),
+                                    type=Notice.ALARM, project_id=project, user_id=user)
         msg.save()
         response['errcode'] = 0
         response['message'] = "success"
@@ -731,19 +734,18 @@ class showNoticeList(View):
         #         sub_tmp = {"noticeId": j.id, "taskId": i.id, "deadline": j.deadline,
         #                    "type": j.type, "user_id": j.user_id, "content": j.content, "seen": j.seen}
         #         data.append(sub_tmp)
-        notices = Notice.objects.filter(project_id_id=projectId).order_by('-deadline')
+        project = Project.objects.get(id=projectId)
+        notices = Notice.objects.filter(project_id_id=project).order_by('-deadline')
         for j in notices:
             sub_tmp = {"noticeId": j.id, "deadline": j.deadline,
-                       "type": j.type, "user_id": j.user_id, "content": j.content, "seen": j.seen}
-            if j.type == Notice.ALARM :
-                i = Task.objects.filter(id=j.belongingTask_id)
-                sub_tmp["task_id"] = i.id
+                       "type": j.type, "user_id": j.user_id_id, "content": j.content, "seen": j.seen}
+            if j.type == Notice.ALARM:
+                sub_tmp["task_id"] = j.belongingTask_id
             data.append(sub_tmp)
 
         response['errcode'] = 0
         response['message'] = "success"
         response['data'] = data
-
         return JsonResponse(response)
 
 # TODO: 将通知标记为已读
