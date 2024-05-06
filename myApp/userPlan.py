@@ -4,6 +4,7 @@ from django.views import View
 from myApp.userChat import delete_user_from_groups
 import json
 import datetime
+import pytz
 
 
 # --------------------project level--------------------
@@ -195,6 +196,7 @@ class addSubTask(View):
         belongTask = kwargs.get("fatherTaskId", -1)
         managerId = kwargs.get("managerId", -1)
         t = kwargs.get("start_time", "")
+        print(time)
         y, m, d = t.split("-")
         y = int(y)
         m = int(m)
@@ -222,8 +224,8 @@ class addSubTask(View):
             return JsonResponse(response)
 
         # use time[0] as year time[1] as month time[2] as day
-        deadline = datetime.datetime(year=year, month=month, day=day)
-        startTime = datetime.datetime(year=y, month=m, day=d)
+        deadline = datetime.datetime(year=year, month=month, day=day, tzinfo=pytz.utc)
+        startTime = datetime.datetime(year=y, month=m, day=d, tzinfo=pytz.utc)
         task = Task.objects.create(name=name, deadline=deadline, contribute_level=contribute, project_id_id=projectId,
                                    parent_id_id=belongTask, start_time=startTime)
         task.status = Task.NOTSTART
@@ -726,7 +728,7 @@ class showNoticeList(View):
             notices = Notice.objects.filter(belongingTask=i).order_by('-deadline')
             for j in notices:
                 sub_tmp = {"noticeId": j.id, "taskId": i.id, "deadline": j.deadline,
-                           "type": j.type, "user_id": j.user_id}
+                           "type": j.type, "user_id": j.user_id, "content": j.content, "seen": j.seen}
                 data.append(sub_tmp)
         response['errcode'] = 0
         response['message'] = "success"
