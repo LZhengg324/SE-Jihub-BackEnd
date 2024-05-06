@@ -838,19 +838,21 @@ class GetActivations(View):
     except Exception:
       return JsonResponse(response)
     response = {}
-    genResponseStateInfo(response, 0, "get bind repos ok")
+    genResponseStateInfo(response, 0, "sucsessful!")
     response["data"] = {}
-    projectId = str(kwargs.get('projectId'))
+    projectId = str(kwargs.get('project_id'))
     project = isProjectExists(projectId)
     if project == None:
       return JsonResponse(genResponseStateInfo(response, 1, "project does not exists"))
     descLogName = str(getCounter()) + "_GetActivations.log"
     try:
       # userProjectRepos = UserProjectRepo.objects.filter(project_id=projectId)
-      tasks = Task.objects.filter(project_id=projectId, status='A')
+      tasks = Task.objects.filter(project_id=projectId, status='A', project_id__isnull=False)
       for task in tasks:
         id = task.id
-        user_id = UserTask.objects.get(task_id=id).user_id
+
+        user_id = UserTask.objects.get(task_id=id).user_id.id
+        print(type(user_id))
         if user_id in response["data"]:
           response["data"][user_id] += task.contribute_level
         else:
@@ -858,6 +860,6 @@ class GetActivations(View):
     except Exception as e:
       return JsonResponse(genUnexpectedlyErrorInfo(response, e))
     if(len(response["data"]) == 0) :
-      return JsonResponse(genResponseStateInfo(response, 1, "null"))
+      return JsonResponse(genResponseStateInfo(response, 1, "You don't have completed task"))
 
     return JsonResponse(response)
