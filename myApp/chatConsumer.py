@@ -132,7 +132,7 @@ class ChatConsumer(WebsocketConsumer):
                 'type': 2
             }))
 
-    def remind_all(self):
+    def remind_all(self,event):
         if not UserGroup.objects.filter(user=self.userId, group=self.groupId).exists():
             self.groupId = 0
         self.send(text_data=json.dumps({
