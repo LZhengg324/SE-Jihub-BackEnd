@@ -684,6 +684,7 @@ class notice(View):
 
         taskId = kwargs.get("taskId", -1)
         deadline = kwargs.get("deadline", "")
+        project_id = kwargs.get("project_id", -1)
         year, month, day, hour, minute = deadline.split("-")
         year = int(year)
         month = int(month)
@@ -695,10 +696,10 @@ class notice(View):
             response['message'] = "task not exist"
             response['data'] = None
             return JsonResponse(response)
-
+        project = Project.objects.get(id=project_id)
         msg = Notice.objects.create(belongingTask_id=taskId,
                                     deadline=datetime.datetime(year=year, month=month, day=day, hour=hour,
-                                                               minute=minute), type=Notice.ALARM)
+                                                               minute=minute), type=Notice.ALARM, project_id=project)
         msg.save()
         response['errcode'] = 0
         response['message'] = "success"
@@ -722,14 +723,23 @@ class showNoticeList(View):
             response['data'] = None
             return JsonResponse(response)
 
-        taskList = Task.objects.filter(project_id_id=projectId)
+        # taskList = Task.objects.filter(project_id_id=projectId)
         data = []
-        for i in taskList:
-            notices = Notice.objects.filter(belongingTask=i).order_by('-deadline')
-            for j in notices:
-                sub_tmp = {"noticeId": j.id, "taskId": i.id, "deadline": j.deadline,
-                           "type": j.type, "user_id": j.user_id, "content": j.content, "seen": j.seen}
-                data.append(sub_tmp)
+        # for i in taskList:
+        #     notices = Notice.objects.filter(belongingTask=i).order_by('-deadline')
+        #     for j in notices:
+        #         sub_tmp = {"noticeId": j.id, "taskId": i.id, "deadline": j.deadline,
+        #                    "type": j.type, "user_id": j.user_id, "content": j.content, "seen": j.seen}
+        #         data.append(sub_tmp)
+        notices = Notice.objects.filter(project_id_id=projectId).order_by('-deadline')
+        for j in notices:
+            sub_tmp = {"noticeId": j.id, "deadline": j.deadline,
+                       "type": j.type, "user_id": j.user_id, "content": j.content, "seen": j.seen}
+            if j.type == Notice.ALARM :
+                i = Task.objects.filter(id=j.belongingTask_id)
+                sub_tmp["task_id"] = i.id
+            data.append(sub_tmp)
+
         response['errcode'] = 0
         response['message'] = "success"
         response['data'] = data
