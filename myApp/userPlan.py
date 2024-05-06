@@ -741,6 +741,10 @@ class showNoticeList(View):
                        "type": j.type, "user_id": j.user_id_id, "content": j.content, "seen": j.seen}
             if j.type == Notice.ALARM:
                 sub_tmp["task_id"] = j.belongingTask_id
+            else:
+                projectLinkPr = ProjectLinkPr.objects.get(id=j.projectLinkPr_id_id)
+                sub_tmp["ghpr_id"] = projectLinkPr.ghpr_id
+                sub_tmp["repo_id"] = projectLinkPr.repo_id_id
             data.append(sub_tmp)
 
         response['errcode'] = 0
