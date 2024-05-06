@@ -833,3 +833,38 @@ class CreateRepo(View):
 #     except Exception:
 #       return JsonResponse(genResponseStateInfo(response, 2, "os.system error"))
 #     return JsonResponse(genResponseStateInfo(response, 0, "Repo created successfully"))
+
+class GetActivations(View):
+  def post(self, request):
+    DBG("---- in " + sys._getframe().f_code.co_name + " ----")
+    response = {'message': "404 not success", "errcode": -1}
+    try:
+      kwargs: dict = json.loads(request.body)
+    except Exception:
+      return JsonResponse(response)
+    response = {}
+    genResponseStateInfo(response, 0, "sucsessful!")
+    response["data"] = {}
+    projectId = str(kwargs.get('project_id'))
+    project = isProjectExists(projectId)
+    if project == None:
+      return JsonResponse(genResponseStateInfo(response, 1, "project does not exists"))
+    descLogName = str(getCounter()) + "_GetActivations.log"
+    try:
+      # userProjectRepos = UserProjectRepo.objects.filter(project_id=projectId)
+      tasks = Task.objects.filter(project_id=projectId, status='A', project_id__isnull=False)
+      for task in tasks:
+        id = task.id
+
+        user_id = UserTask.objects.get(task_id=id).user_id.id
+        print(type(user_id))
+        if user_id in response["data"]:
+          response["data"][user_id] += task.contribute_level
+        else:
+          response["data"][user_id] = task.contribute_level
+    except Exception as e:
+      return JsonResponse(genUnexpectedlyErrorInfo(response, e))
+    if(len(response["data"]) == 0) :
+      return JsonResponse(genResponseStateInfo(response, 1, "You don't have completed task"))
+
+    return JsonResponse(response)
