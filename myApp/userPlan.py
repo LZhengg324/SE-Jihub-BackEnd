@@ -743,8 +743,9 @@ class showNoticeList(View):
                 sub_tmp["task_id"] = j.belongingTask_id
             else:
                 projectLinkPr = ProjectLinkPr.objects.get(id=j.projectLinkPr_id_id)
+                repo = Repo.objects.get(id=projectLinkPr.repo_id_id)
                 sub_tmp["ghpr_id"] = projectLinkPr.ghpr_id
-                sub_tmp["repo_id"] = projectLinkPr.repo_id_id
+                sub_tmp["remote_path"] = repo.remote_path
             data.append(sub_tmp)
 
         response['errcode'] = 0
