@@ -549,7 +549,8 @@ class CreatePullRequest(View):
         content = ('"{}" 提交了一个新的 Pull Request'.format(user.name))
         notify_people = User.objects.get(id=project.manager_id_id)
         notify = Notice.objects.create(deadline=datetime.datetime.now(datetime.timezone.utc), type=Notice.NOTIFICATION,
-                                       projectLinkPr_id=projectLinkPr, user_id=notify_people, seen=False, content = content)
+                                       projectLinkPr_id=projectLinkPr, user_id=notify_people,
+                                       seen=False, content = content, project_id=project)
         notify.save()
       else:
         return JsonResponse(genResponseStateInfo(response, 2, "create pr failed"))
@@ -655,7 +656,9 @@ class ApprovePullRequest(View):
 
     repo = Repo.objects.get(id=repo_id)
     projectLinkPr = ProjectLinkPr.objects.get(ghpr_id=ghpr_id, repo_id=repo)
+    project = Project.objects.get(id=projectLinkPr.project_id_id)
     print("Repo : " + str(repo.id))
+    print("Project : " + str(project.id))
     try:
       local_path = repo.local_path
       command = (
@@ -681,7 +684,7 @@ class ApprovePullRequest(View):
         user = User.objects.get(id=projectLinkPr.user_id_id)
         content = ('您提交的Pull Request —— #{} 项目负责人已通过'.format(projectLinkPr.ghpr_id))
         notify = Notice.objects.create(deadline=datetime.datetime.now(datetime.timezone.utc), type=Notice.NOTIFICATION,
-                                       projectLinkPr_id=projectLinkPr, user_id=user, seen=False, content=content)
+                                       projectLinkPr_id=projectLinkPr, user_id=user, seen=False, content=content, project_id=project)
         notify.save()
       else:
         return JsonResponse(genResponseStateInfo(response, 3, "approve pr failed"))
@@ -712,7 +715,9 @@ class ClosePullRequest(View):
 
     repo = Repo.objects.get(id=repo_id)
     projectLinkPr = ProjectLinkPr.objects.get(ghpr_id=ghpr_id, repo_id=repo)
+    project = Project.objects.get(id=projectLinkPr.project_id_id)
     print("Repo : " + str(repo.id))
+    print("Project : " + str(project.id))
     try:
       local_path = repo.local_path
       print(local_path)
@@ -734,7 +739,7 @@ class ClosePullRequest(View):
         user = User.objects.get(id=projectLinkPr.user_id_id)
         content = ('您提交的Pull Request —— #{}已被项目负责人拒绝'.format(projectLinkPr.ghpr_id))
         notify = Notice.objects.create(deadline=datetime.datetime.now(datetime.timezone.utc), type=Notice.NOTIFICATION,
-                                       projectLinkPr_id=projectLinkPr, user_id=user, seen=False, content=content)
+                                       projectLinkPr_id=projectLinkPr, user_id=user, seen=False, content=content, project_id=project)
         notify.save()
       else :
         return JsonResponse(genResponseStateInfo(response, 3, "close pr failed"))
