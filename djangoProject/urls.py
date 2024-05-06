@@ -67,6 +67,8 @@ urlpatterns = [
     path('api/develop/approvePullRequest', userdevelop.ApprovePullRequest.as_view()),   #新添，已测试
     path('api/develop/closePullRequest', userdevelop.ClosePullRequest.as_view()),   #新添，已测试
     path('api/develop/CreateRepo', userdevelop.CreateRepo.as_view()),   #新添，未测试
+    # /api/develop/getActivations
+    path('api/develop/getActivations', userdevelop.GetActivations.as_view()),   #新添，未测试
     path('api/develop/createBranch', userdevelop.createBranch.as_view()),   #新添，已测试
     path('api/develop/getDiff', userdevelop.GetDiff.as_view()), #新添，已测试
     path('api/register', userBasic.register),
