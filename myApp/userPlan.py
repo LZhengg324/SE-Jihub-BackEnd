@@ -1,3 +1,4 @@
+from django.core.serializers import serialize
 from django.http import JsonResponse
 from myApp.models import *
 from django.views import View
@@ -630,8 +631,7 @@ class removeMember(View):
             response['data'] = None
             return JsonResponse(response)
 
-        if UserProject.objects.filter(user_id=request.user, project_id_id=projectId,
-                                      role=UserProject.NORMAL).count() > 0:
+        if not UserProject.objects.filter(user_id=request.user, project_id_id=projectId, role=UserProject.ADMIN).exists:
             response['errcode'] = 3
             response['message'] = "user not admin"
             response['data'] = None
@@ -746,6 +746,8 @@ class showNoticeList(View):
                 repo = Repo.objects.get(id=projectLinkPr.repo_id_id)
                 sub_tmp["ghpr_id"] = projectLinkPr.ghpr_id
                 sub_tmp["remote_path"] = repo.remote_path
+                sub_tmp["pr"] = serialize('json', [projectLinkPr])
+                print(serialize('json', [projectLinkPr]))
             data.append(sub_tmp)
 
         response['errcode'] = 0
