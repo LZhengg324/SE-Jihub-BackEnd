@@ -855,9 +855,14 @@ class CreateRepo(View):
             print(op)
             os.system(op)
 
-            # 返回到之前的工作目录
-            os.chdir(original_directory)
-
+            # cmd = "gh repo view Jihub2024/" + name + "_" + str(project_id) + " --json sshUrl"
+            # ssh = ""
+            # result = subprocess.run(cmd, capture_output=True, shell=True, text=True)
+            # if result.returncode == 0:
+            #     data = json.loads(result.stdout)
+            #     ssh = data['sshUrl']
+            ssh = "git@github.com:Jihub2024/" + name + "_" + str(project_id)
+            response['ssh'] = ssh
         except Exception:
             return JsonResponse(genResponseStateInfo(response, 2, "os.system error"))
         # repo = Repo.objects.create(name=name, local_path=local_path, remote_path=remote_path)
@@ -930,5 +935,34 @@ class GetActivations(View):
             return JsonResponse(genUnexpectedlyErrorInfo(response, e))
         if (len(response["data"]) == 0):
             return JsonResponse(genResponseStateInfo(response, 1, "You don't have completed task"))
+
+        return JsonResponse(response)
+
+class inviteCollaborator(View):
+    def post(self, request):
+        DBG("---- in " + sys._getframe().f_code.co_name + " ----")
+        response = {'message': "404 not success", "errcode": -1}
+        try:
+            kwargs: dict = json.loads(request.body)
+        except Exception:
+            return JsonResponse(response)
+        repo_id = kwargs['repo_id']
+        username = kwargs['username']
+        repo = Repo.objects.get(id=repo_id)
+        response = {}
+        try:
+            cmd = ('gh api   --method PUT   '
+                   '-H "Accept: application/vnd.github+json"   '
+                   '-H "X-GitHub-Api-Version: 2022-11-28"   '
+                   '/repos/{}/collaborators/{} '
+                   .format(repo.remote_path, username))
+            result = subprocess.run(cmd, capture_output=True, shell=True, text=True)
+            print(result)
+            if result.returncode == 0:
+                genResponseStateInfo(response, 0, "Invitation sent successfully")
+            else:
+                genResponseStateInfo(response, 1, "Invitation sent failed")
+        except Exception as e:
+            genResponseStateInfo(response, 2, "gh api run failed as: " + str(e))
 
         return JsonResponse(response)
