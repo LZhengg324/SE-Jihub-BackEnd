@@ -938,6 +938,33 @@ class GetActivations(View):
 
         return JsonResponse(response)
 
+class checkIsCollaborator(View):
+    def post(self, request):
+        DBG("---- in " + sys._getframe().f_code.co_name + " ----")
+        response = {'message': "404 not success", "errcode": -1}
+        try:
+            kwargs: dict = json.loads(request.body)
+        except Exception:
+            return JsonResponse(response)
+        repo_id = kwargs['repo_id']
+        username = kwargs['username']
+        repo = Repo.objects.get(id=repo_id)
+        try:
+            cmd = ('gh api   -H "Accept: application/vnd.github+json" '
+                   ' -H "X-GitHub-Api-Version: 2022-11-28" '
+                   '/repos/{}/collaborators/{}'
+                   .format(repo.remote_path, username))
+            result = subprocess.run(cmd, capture_output=True, shell=True, text=True)
+            print(result)
+            if result.returncode == 0:
+                genResponseStateInfo(response, 0, "You are a collaborator in the repository")
+            else:
+                genResponseStateInfo(response, 1, "You aren't a collaborator in the repository")
+        except Exception as e:
+            genResponseStateInfo(response, 2, "gh api run failed as: " + str(e))
+
+        return JsonResponse(response)
+
 class inviteCollaborator(View):
     def post(self, request):
         DBG("---- in " + sys._getframe().f_code.co_name + " ----")

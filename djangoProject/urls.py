@@ -71,6 +71,7 @@ urlpatterns = [
     path('api/develop/createBranch', userdevelop.createBranch.as_view()),   #新添，已测试
     path('api/develop/getDiff', userdevelop.GetDiff.as_view()), #新添，已测试
 
+    path('api/develop/checkIsCollaborator', userdevelop.checkIsCollaborator.as_view()),
     path('api/develop/inviteCollaborator', userdevelop.inviteCollaborator.as_view()),
 
     path('api/register', userBasic.register),
