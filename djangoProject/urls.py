@@ -22,6 +22,7 @@ from myApp.sparkAI import AI
 from myApp import notice, userChat
 from django.urls import re_path
 from myApp import chatConsumer
+from myApp.py_etherpad import pad
 
 
 websocket_urlpatterns = [
@@ -141,4 +142,9 @@ urlpatterns = [
     path('api/file/deleteFile', file.deleteFile.as_view()),
     path('api/file/watchFiles',file.watchFiles.as_view()),
     path('api/mailTest', mail.MailTest.as_view()),
+
+    path('api/pad/createPad', pad.createPad),
+    path('api/pad/deletePad', pad.deletePad),
+    path('api/pad/enterPad', pad.enterPad),
+    path('api/pad/getPads', pad.getPads)
 ]
