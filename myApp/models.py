@@ -178,17 +178,17 @@ class Document(models.Model):
     time          = models.DateTimeField(auto_now_add=True)
     project_id    = models.ForeignKey(Project, on_delete=models.CASCADE)
     user_id       = models.ForeignKey(User, on_delete=models.CASCADE)
-  
+
 class UserCollectDoc(models.Model):
   id            = models.AutoField(primary_key=True)
   user_id       = models.ForeignKey(User, on_delete=models.CASCADE)
   doc_id        = models.ForeignKey(Document, on_delete=models.CASCADE)
-  
+
 class UserAccessDoc(models.Model):
   id            = models.AutoField(primary_key=True)
   user_id       = models.ForeignKey(User, on_delete=models.CASCADE)
   doc_id        = models.ForeignKey(Document, on_delete=models.CASCADE)
-  
+
 class UserDocLock(models.Model):
   doc_id        = models.ForeignKey(Document, on_delete=models.CASCADE, unique=True)
   user_id       = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -307,3 +307,23 @@ class Branch(models.Model):
     user_id = models.ForeignKey(User, on_delete=models.CASCADE) #记录是哪个开发人员的分支
 
 # TODO : add enum check in function
+
+
+class Pad(models.Model):
+    token = models.CharField(max_length=255, primary_key=True)
+    name = models.CharField(max_length=255)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    info = models.CharField(max_length=255)
+
+
+class UserPad(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    pad = models.ForeignKey(Pad, on_delete=models.CASCADE)
+    color = models.CharField(max_length=255)
+    OWNER = 'A'
+    GUEST = 'B'
+    ROLE_LIST = (
+        (OWNER, 'OWNER'),
+        (GUEST, 'GUEST'),
+    )
+    role = models.CharField(max_length=2, choices=ROLE_LIST)
