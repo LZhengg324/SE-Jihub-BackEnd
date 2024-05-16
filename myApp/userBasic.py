@@ -116,6 +116,11 @@ def login(request):
         project = Project.objects.filter(id = int(up.project_id.id)).first()
         projects.append({'id': project.id, 'name': project.name})
     user.last_login_time = datetime.datetime.now()
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        user.last_login_ip = x_forwarded_for.split(',')[0]  # 所以这里是真实的ip
+    else:
+        user.last_login_ip = request.META.get('REMOTE_ADDR')  # 这里获得代理ip
     user.save()
     return response_json(
         errcode = Success,

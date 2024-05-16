@@ -137,6 +137,7 @@ class Notice(models.Model):
     projectLinkPr_id = models.ForeignKey(ProjectLinkPr, on_delete=models.CASCADE, null=True, blank=True)
     user_id = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)  # 要通知的人
     seen = models.BooleanField(default=False)
+    project_id = models.ForeignKey(Project, on_delete=models.CASCADE, null=True, blank=True)
 
 
 class MyFile(models.Model):
