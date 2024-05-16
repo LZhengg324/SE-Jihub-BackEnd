@@ -101,19 +101,107 @@ def enterPad(request):
 
 def getPads(request):
     kwargs: dict = json.loads(request.body)
-    projectId = kwargs.get('projectId')
+    projectId = int(kwargs.get('projectId'))
     pads = Pad.objects.filter(project=projectId)
     rets = []
     for pad in pads:
         rets.append({
             'name': pad.name,
             'token': pad.token,
-            'info': pad.info
+            'info': pad.info,
+            'creatorId': UserPad.objects.filter(pad=pad).first().user.id,
+            'creatorName': UserPad.objects.filter(pad=pad).first().user.name
         })
     return response_json(
         errcode=0,
         data={
             'pads': rets
+        }
+    )
+
+
+def favorPad(request):
+    kwargs: dict = json.loads(request.body)
+    userId = int(kwargs.get('userId'))
+    token = str(kwargs.get('token'))
+    users = User.objects.filter(id=userId)
+    if users.exists():
+        user = users.first()
+    else:
+        return response_json(
+            errcode=1,
+            message="User not exist!"
+        )
+    pads = Pad.objects.filter(token=token)
+    if pads.exists():
+        pad = pads.first()
+    else:
+        return response_json(
+            errcode=2,
+            message="Pad not exist!"
+        )
+
+    if UserFavorPad.objects.filter(user=user, pad=pad).exists():
+        return response_json(
+            errcode=3,
+            message="You have favored the pad!"
+        )
+    else:
+        UserFavorPad.objects.create(user=user, pad=pad)
+    return response_json(errcode=0)
+
+
+def unFavorPad(request):
+    kwargs: dict = json.loads(request.body)
+    userId = int(kwargs.get('userId'))
+    token = str(kwargs.get('token'))
+    users = User.objects.filter(id=userId)
+    if users.exists():
+        user = users.first()
+    else:
+        return response_json(
+            errcode=1,
+            message="User not exist!"
+        )
+    pads = Pad.objects.filter(token=token)
+    if pads.exists():
+        pad = pads.first()
+    else:
+        return response_json(
+            errcode=2,
+            message="Pad not exist!"
+        )
+
+    if not UserFavorPad.objects.filter(user=user, pad=pad).exists():
+        return response_json(
+            errcode=3,
+            message="You haven't favored the pad!"
+        )
+    else:
+        UserFavorPad.objects.filter(user=user, pad=pad).first().delete()
+    return response_json(errcode=0)
+
+
+def getFavorPads(request):
+    kwargs: dict = json.loads(request.body)
+    userId = int(kwargs.get('userId'))
+    projectId = int(kwargs.get('projectId'))
+    favors = UserFavorPad.objects.filter(user=userId)
+    pads = []
+    for favor in favors:
+        pad = favor.pad
+        if pad.project.id == projectId:
+            pads.append({
+                'name': pad.name,
+                'token': pad.token,
+                'info': pad.info,
+                'creatorId': UserPad.objects.filter(pad=pad).first().user.id,
+                'creatorName': UserPad.objects.filter(pad=pad).first().user.name
+            })
+    return response_json(
+        errcode=0,
+        data={
+            'pads': pads
         }
     )
 
@@ -131,7 +219,6 @@ def post_delete_pad(sender, instance, **kwargs):
     pad = instance
     token = pad.token
     ep_client.deletePad(token)
-
 
 # if __name__ == '__main__':
 #     import subprocess

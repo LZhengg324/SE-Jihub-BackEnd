@@ -328,3 +328,8 @@ class UserPad(models.Model):
         (GUEST, 'GUEST'),
     )
     role = models.CharField(max_length=2, choices=ROLE_LIST)
+
+
+class UserFavorPad(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    pad = models.ForeignKey(Pad, on_delete=models.CASCADE)
