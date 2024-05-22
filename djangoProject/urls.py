@@ -155,5 +155,8 @@ urlpatterns = [
     path('api/pad/createPad', pad.createPad),
     path('api/pad/deletePad', pad.deletePad),
     path('api/pad/enterPad', pad.enterPad),
-    path('api/pad/getPads', pad.getPads)
+    path('api/pad/getPads', pad.getPads),
+    path('api/pad/favorPad', pad.favorPad),
+    path('api/pad/unFavorPad', pad.unFavorPad),
+    path('api/pad/getFavorPads', pad.getFavorPads)
 ]
