@@ -84,6 +84,7 @@ class ProjectLinkPr(models.Model):
 class Task(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
+    description = models.TextField(default="")
     create_time = models.DateTimeField(auto_now_add=True)
     start_time = models.DateTimeField(default="2050-12-31")
     complete_time = models.DateTimeField(default="2050-12-31")
@@ -106,6 +107,14 @@ class Task(models.Model):
     order = models.IntegerField(default=0)
     link_pr = models.ForeignKey(ProjectLinkPr, on_delete=models.CASCADE, null=True, blank=True)
 
+class CommentInPr(models.Model):
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    projectLinkPr = models.ForeignKey(ProjectLinkPr, on_delete=models.CASCADE)
+    content = models.TextField()
+    parent_comment = models.ForeignKey('self', on_delete=models.CASCADE, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    checkbox = models.BooleanField(default=False, null=True)
 
 class Group(models.Model):
     id = models.AutoField(primary_key=True)

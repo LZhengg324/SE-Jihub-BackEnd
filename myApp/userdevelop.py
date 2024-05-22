@@ -546,14 +546,7 @@ class CreatePullRequest(View):
         repo = Repo.objects.get(id=repo_id)
         local_path = repo.local_path
         remote_path = repo.remote_path
-        # try:
-        #   os.system("gh pr create" + " --title " + title + " --body " + description + " --base main " +
-        #             " --head " + source_branch_name + " --repo " + remote_path)
-        #   genResponseStateInfo(response, 0, "Pull request created successfully")
-        #   pull_request = PullRequest.objects.create(title=title, description=description, project_id=project_id, creator_id=creator_id, state='A')
-        #   pull_request.save()
-        # except Exception as e:
-        #   return genUnexpectedlyErrorInfo(response, e)
+
         try:
             command = (
                 'cd \"{}\" && '
@@ -584,6 +577,9 @@ class CreatePullRequest(View):
                     task.status = Task.REVIEWING
                     task.link_pr = projectLinkPr
                     task.save()
+                    comment = CommentInPr.objects.create(user=user, projectLinkPr=projectLinkPr,
+                                                         content=parent_task.name + " - " + task.name)
+                    comment.save()
                 content = ('"{}" 在 {} 分支上提交了一个新的 Pull Request'
                            '关联子任务:'.format(user.name, source_branch_name))
                 tasks_info = ""
@@ -993,3 +989,92 @@ class inviteCollaborator(View):
             genResponseStateInfo(response, 2, "gh api run failed as: " + str(e))
 
         return JsonResponse(response)
+
+class comment(View):
+    def post(self, request):
+        DBG("---- in " + sys._getframe().f_code.co_name + " ----")
+        response = {'message': "404 not success", "errcode": -1}
+        try:
+            kwargs: dict = json.loads(request.body)
+        except Exception:
+            return JsonResponse(response)
+        user_id = kwargs['user_id']
+        project_id = kwargs['project_id']
+        ghpr_id = kwargs['ghpr_id']
+        parent_comment = kwargs['parent_comment']
+        content = kwargs['content']
+
+        if not ProjectLinkPr.objects.filter(project_id_id=project_id, ghpr_id=ghpr_id).exists():
+            return JsonResponse(genResponseStateInfo(response, 1, "no such gh pr in project"))
+        projectLinkPr = ProjectLinkPr.objects.get(project_id_id=project_id, ghpr_id=ghpr_id)
+        project = Project.objects.get(id=project_id)
+
+        if not CommentInPr.objects.filter(id=parent_comment).exists():
+            return JsonResponse(genResponseStateInfo(response, 2, "no such parent comment in project"))
+        parentComment = CommentInPr.objects.get(id=parent_comment)
+
+        user = User.objects.get(id=user_id)
+        commentInPr = CommentInPr.objects.create(user=user, projectLinkPr=projectLinkPr, content=content,
+                                                 parent_comment=parentComment, checkbox=None)
+        commentInPr.save()
+        notice_message=('{} 项目的 #{} Pull Request 有新的留言'
+                        .format(Project.objects.get(id=project_id).name, projectLinkPr.ghpr_id))
+        if user_id == Project.objects.get(id=project_id).manager_id_id:
+            toUser = User.objects.get(id=projectLinkPr.user_id_id)
+            notify = Notice.objects.create(deadline=datetime.datetime.now(datetime.timezone.utc),
+                                            type=Notice.NOTIFICATION, projectLinkPr_id=projectLinkPr,
+                                           user_id=toUser, project_id=project, content=notice_message)
+        else:
+            manager = User.objects.get(id=Project.objects.get(id=project_id).manager_id_id)
+            notify = Notice.objects.create(deadline=datetime.datetime.now(datetime.timezone.utc),
+                                           type=Notice.NOTIFICATION, projectLinkPr_id=projectLinkPr,
+                                           user_id=manager, project_id=project, content=notice_message)
+        notify.save()
+        return JsonResponse(genResponseStateInfo(response, 0, "comment saved"))
+
+class GetCommentsList(View):
+    def post(self, request):
+        DBG("---- in " + sys._getframe().f_code.co_name + " ----")
+        response = {'message': "404 not success", "errcode": -1}
+        try:
+            kwargs: dict = json.loads(request.body)
+        except Exception:
+            return JsonResponse(response)
+        project_id = kwargs['project_id']
+        ghpr_id = kwargs['ghpr_id']
+
+        if not ProjectLinkPr.objects.filter(project_id_id=project_id, ghpr_id=ghpr_id).exists():
+            return JsonResponse(genResponseStateInfo(response, 1, "no such gh pr in project"))
+        projectLinkPr = ProjectLinkPr.objects.get(project_id_id=project_id, ghpr_id=ghpr_id)
+
+        taskList = CommentInPr.objects.filter(projectLinkPr=projectLinkPr, parent_comment=None).order_by('id')
+        data = []
+        for task in taskList:
+            tmp = {'task_id' : task.id, 'task_name' : task.content, 'solved' : task.checkbox}
+            comments = CommentInPr.objects.filter(parent_comment=task).order_by('created_at')
+            commentsList = []
+            for comment in comments:
+                user = User.objects.get(id=comment.user.id)
+                sub_tmp = {'comment_id' : comment.id, 'user_id' : user.id, 'user_name' : user.name,
+                           'content' : comment.content, 'created_at' : comment.created_at}
+                commentsList.append(sub_tmp)
+            tmp['comments'] = commentsList
+            data.append(tmp)
+        response['data'] = data
+        return JsonResponse(genResponseStateInfo(response, 0, "get commentList success"))
+
+class MarkTaskSolved(View):
+    def post(self, request):
+        DBG("---- in " + sys._getframe().f_code.co_name + " ----")
+        response = {'message': "404 not success", "errcode": -1}
+        try:
+            kwargs: dict = json.loads(request.body)
+        except Exception:
+            return JsonResponse(response)
+        comment_id = kwargs['comment_id']
+        comment = CommentInPr.objects.get(id=comment_id)
+        if comment == None :
+            return JsonResponse(genResponseStateInfo(response, 1, "no such task comment"))
+        comment.checkbox = True
+        comment.save()
+        return JsonResponse(genResponseStateInfo(response, 0, "mark task as solved"))

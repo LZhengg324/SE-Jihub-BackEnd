@@ -1,10 +1,15 @@
 # coding: utf-8
 import json
+import subprocess
+
+import requests
 
 import myApp.sparkAI.SparkApi as SparkApi
 import time
 
 from djangoProject.settings import response_json
+from myApp.models import Repo
+
 appid = "8c7f700a"  # 填写控制台中获取的 APPID 信息
 api_secret = "OGQwMjI2MmRjNTY0ZjcxZWZlMGRlNmM5"  # 填写控制台中获取的 APISecret 信息
 api_key = "2a4394a0d3316a4271dac8eb0c65ab04"  # 填写控制台中获取的 APIKey 信息
@@ -79,8 +84,53 @@ def CodeReview(request):
         }
     )
 
+def CommitMessageGen(request):
+    kwargs: dict = json.loads(request.body)
+    branch = kwargs.get('branch')
+    repo_id = kwargs.get('repo_id')
+    repo = Repo.objects.get(id=repo_id)
+
+    response={}
+    commit_detail = {}
+
+    cmd = ("gh api repos/{}/commits?sha={} --jq '.[0].sha'".format(repo.remote_path, branch))
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if result.returncode == 0:
+        commit_sha = result.stdout.replace("\n", "")
+        if result.returncode == 0:
+            result = subprocess.run(f"gh api repos/{repo.remote_path}/commits/{commit_sha}", capture_output=True,
+                                    shell=True, text=True)
+            commit_detail = json.loads(result.stdout)
+        else:
+            response['errcode'] = 2
+            response['errmsg'] = "get newest commit detail failed"
+    else:
+        response['errcode'] = 1
+        response['errmsg'] = "get newest commit sha failed"
+
+
+    files_changed = commit_detail['files']
+    diff = ""
+    for file in files_changed:
+        if 'patch' in file:
+            diff += file['filename'] + file['patch'] + "\n"
+    text = [
+        {"role": "system", "content": "你现在扮演一位资深程序员"},
+    ]
+    Input = "请针对以下代码的改动部分用中文生成git的commit message:\n" + diff
+    question = checklen(getText(text, "user", Input))
+    SparkApi.answer = ""
+    SparkApi.main(appid, api_key, api_secret, Spark_url, domain, question)
+
+    return response_json(
+        errcode=0,
+        data={
+            'content': SparkApi.answer
+        }
+    )
 
 if __name__ == '__main__':
+
     code = input()
     text = [
         {"role": "system", "content": "你现在扮演一位资深程序员"},
