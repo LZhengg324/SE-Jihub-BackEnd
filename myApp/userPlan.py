@@ -193,6 +193,7 @@ class addSubTask(View):
         day = int(day)
         contribute = kwargs.get("contribute", 0)
         name = kwargs.get("subTaskName", "")
+        description = kwargs.get("description", "")
         projectId = kwargs.get("projectId", -1)
         belongTask = kwargs.get("fatherTaskId", -1)
         managerId = kwargs.get("managerId", -1)
@@ -228,7 +229,7 @@ class addSubTask(View):
         deadline = datetime.datetime(year=year, month=month, day=day, tzinfo=pytz.utc)
         startTime = datetime.datetime(year=y, month=m, day=d, tzinfo=pytz.utc)
         task = Task.objects.create(name=name, deadline=deadline, contribute_level=contribute, project_id_id=projectId,
-                                   parent_id_id=belongTask, start_time=startTime)
+                                   parent_id_id=belongTask, start_time=startTime, description=description)
         task.status = Task.NOTSTART
         task.save()
 

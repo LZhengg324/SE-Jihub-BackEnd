@@ -71,9 +71,11 @@ urlpatterns = [
     path('api/develop/getActivations', userdevelop.GetActivations.as_view()),   #新添，未测试
     path('api/develop/createBranch', userdevelop.createBranch.as_view()),   #新添，已测试
     path('api/develop/getDiff', userdevelop.GetDiff.as_view()), #新添，已测试
-
     path('api/develop/checkIsCollaborator', userdevelop.checkIsCollaborator.as_view()),
     path('api/develop/inviteCollaborator', userdevelop.inviteCollaborator.as_view()),
+    path('api/develop/comment', userdevelop.comment.as_view()),
+    path('api/develop/getCommentsList', userdevelop.GetCommentsList.as_view()),
+    path('api/develop/markTaskSolved', userdevelop.MarkTaskSolved.as_view()),
 
     path('api/register', userBasic.register),
     path('api/login', userBasic.login),
@@ -82,6 +84,7 @@ urlpatterns = [
     path('api/showProfile', userBasic.show),
     path('api/editProfile', userBasic.modify_information),
     path('api/saveTopic', userBasic.save_topic),
+
     path('api/plan/newProject', userPlan.newProject.as_view()),
     path('api/plan/watchAllProject', userPlan.watchAllProject.as_view()),
     path('api/plan/addTask', userPlan.addTask.as_view()),
@@ -104,6 +107,7 @@ urlpatterns = [
     path('api/plan/modifyNotice', userPlan.modifyNotice.as_view()),
     path('api/plan/seenNotice', userPlan.seenNotice.as_view()),
     path('api/plan/removeNotice', userPlan.removeNotice.as_view()),
+
     path('api/echo', debug.echo),
     path('api/notice/userPostNoticeToAll', notice.UserPostNoticeToAll.as_view()),
     path('api/notice/userPostNoticeToOne', notice.UserPostNoticeToOne.as_view()),
@@ -111,11 +115,15 @@ urlpatterns = [
     path('api/notice/sysPostNoticeToAll', notice.SysPostNoticeToAll.as_view()),
     path('api/notice/userGetNotice', notice.UserGetNotice.as_view()),
     path('api/notice/userConfirmNotice', notice.UserConfirmNotice.as_view()),
+
     path('api/plan/getEmail', userPlan.getEmail.as_view()),
     path('api/ai/UnitTest', AI.UnitTest),
     path('api/ai/CodeReview', AI.CodeReview),
+    path('api/ai/CommitMessageGen', AI.CommitMessageGen),
+
     path('api/plan/showContribute',userPlan.showContribute.as_view()),
     path('api/plan/changeOrder',userPlan.changeOrder.as_view()),
+
     path('api/doc/userDocList', shareDoc.UserDocList.as_view()),
     path('api/doc/userCollectDocList', shareDoc.UserCollectDocList.as_view()),
     path('api/doc/addDocToCollect', shareDoc.AddDocToCollect.as_view()),
@@ -127,6 +135,7 @@ urlpatterns = [
     path('api/doc/userEditDocOther', shareDoc.UserEditDocOther.as_view()),
     path('api/doc/userDelDoc', shareDoc.UserDelDoc.as_view()),
     path('api/doc/isDocLocked', shareDoc.IsDocLocked.as_view()),
+
     path('api/chat/getRoomList', userChat.get_user_rooms),
     path('api/chat/getRoomMessages', userChat.get_room_content),
     path('api/chat/createRoom', userChat.create_public_room),
