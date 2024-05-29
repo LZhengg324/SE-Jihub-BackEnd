@@ -1,6 +1,7 @@
 # coding: utf-8
 import json
 import subprocess
+import re
 from urllib import request
 
 import requests
@@ -135,17 +136,25 @@ def LabelGenerate(request):
     kwargs: dict  = json.loads(request.body)
     description = kwargs.get('description')
     text = [
-        {"role": "system", "content": "你现在扮演一位资深程序员"}
+        {"role": "system", "content": "你现在扮演一位秘书"}
     ]
-    Input = "以下任务为新功能、修复缺陷还是优化美化，不需要进行解释：\n" + description
+    Input = "以下是任务的描述，从中提取关键字生成标签，根据格式（标签：...,...,...）输出并用中文逗号隔开\n" + description
+    # 这里有一些标签：1 ，2 ，3 ，4
+    # 接下来给你一段任务描述，从上面的标签中选5个最合适的，输出标签用英文逗号隔开
     question = checklen(getText(text, "user", Input))
     SparkApi.answer = ""
     SparkApi.main(appid, api_key, api_secret, Spark_url, domain, question)
 
+    tags = SparkApi.answer.split("，")
+    pattern = re.compile(r'^标签：')
+    tags_without_prefix = [pattern.sub('', tag) for tag in tags]
+    tags_without_prefix = [tag.replace(" ", "") for tag in tags_without_prefix]
+
+    print(tags_without_prefix)
     return response_json(
         errcode=0,
         data={
-            'content': SparkApi.answer
+            'content': tags_without_prefix
         }
     )
 
