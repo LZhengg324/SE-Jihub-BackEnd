@@ -1,6 +1,7 @@
 # coding: utf-8
 import json
 import subprocess
+from urllib import request
 
 import requests
 
@@ -84,40 +85,59 @@ def CodeReview(request):
         }
     )
 
-def CommitMessageGen(request):
+def PrDescriptionGen(request):
     kwargs: dict = json.loads(request.body)
-    branch = kwargs.get('branch')
-    repo_id = kwargs.get('repo_id')
-    repo = Repo.objects.get(id=repo_id)
-
-    response={}
-    commit_detail = {}
-
-    cmd = ("gh api repos/{}/commits?sha={} --jq '.[0].sha'".format(repo.remote_path, branch))
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-    if result.returncode == 0:
-        commit_sha = result.stdout.replace("\n", "")
-        if result.returncode == 0:
-            result = subprocess.run(f"gh api repos/{repo.remote_path}/commits/{commit_sha}", capture_output=True,
-                                    shell=True, text=True)
-            commit_detail = json.loads(result.stdout)
-        else:
-            response['errcode'] = 2
-            response['errmsg'] = "get newest commit detail failed"
-    else:
-        response['errcode'] = 1
-        response['errmsg'] = "get newest commit sha failed"
-
-
-    files_changed = commit_detail['files']
-    diff = ""
-    for file in files_changed:
-        if 'patch' in file:
-            diff += file['filename'] + file['patch'] + "\n"
+    # branch = kwargs.get('branch')
+    # repo_id = kwargs.get('repo_id')
+    # repo = Repo.objects.get(id=repo_id)
+    #
+    # response={}
+    # commit_detail = {}
+    #
+    # cmd = ("gh api repos/{}/commits?sha={} --jq '.[0].sha'".format(repo.remote_path, branch))
+    # result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    # if result.returncode == 0:
+    #     commit_sha = result.stdout.replace("\n", "")
+    #     if result.returncode == 0:
+    #         result = subprocess.run(f"gh api repos/{repo.remote_path}/commits/{commit_sha}", capture_output=True,
+    #                                 shell=True, text=True)
+    #         commit_detail = json.loads(result.stdout)
+    #     else:
+    #         response['errcode'] = 2
+    #         response['errmsg'] = "get newest commit detail failed"
+    # else:
+    #     response['errcode'] = 1
+    #     response['errmsg'] = "get newest commit sha failed"
+    #
+    #
+    # files_changed = commit_detail['files']
+    # diff = ""
+    # for file in files_changed:
+    #     if 'patch' in file:
+    #         diff += file['filename'] + file['patch'] + "\n"
+    diff = kwargs.get('diff')
     text = [
         {"role": "system", "content": "你现在扮演一位资深程序员"},
     ]
-    Input = "请针对以下代码的改动部分用中文生成git的commit message:\n" + diff
+    Input = "请针对以下代码的改动部分用中文生成改动概述:\n" + diff
+    question = checklen(getText(text, "user", Input))
+    SparkApi.answer = ""
+    SparkApi.main(appid, api_key, api_secret, Spark_url, domain, question)
+
+    return response_json(
+        errcode=0,
+        data={
+            'content': SparkApi.answer
+        }
+    )
+
+def LabelGenerate(request):
+    kwargs: dict  = json.loads(request.body)
+    description = kwargs.get('description')
+    text = [
+        {"role": "system", "content": "你现在扮演一位资深程序员"}
+    ]
+    Input = "以下任务为新功能、修复缺陷还是优化美化，不需要进行解释：\n" + description
     question = checklen(getText(text, "user", Input))
     SparkApi.answer = ""
     SparkApi.main(appid, api_key, api_secret, Spark_url, domain, question)
