@@ -1078,3 +1078,37 @@ class MarkTaskSolved(View):
         comment.checkbox = True
         comment.save()
         return JsonResponse(genResponseStateInfo(response, 0, "mark task as solved"))
+
+class GetDiff2(View):
+    def get(self, request):
+        DBG("---- in " + sys._getframe().f_code.co_name + " ----")
+        response = {'message': "404 not success", "errorcode": -1}
+        try:
+            kwargs: dict = json.loads(request.body)
+        except Exception:
+            return JsonResponse(response)
+        response = {}
+        user_id = kwargs['user_id']
+        remote_path = kwargs['remote_path']
+        project_id = kwargs['project_id']
+        source_branch = kwargs['source_branch']
+
+        if user_id == None or remote_path == None or project_id == None:
+            return JsonResponse(genResponseStateInfo(response, 1, "Null User_id/Remote_path/Project_id"))
+
+        if not isProjectExists(project_id):
+            return JsonResponse(genResponseStateInfo(response, 2, "Project does not exist"))
+
+        if not isUserInProject(user_id, project_id):
+            return JsonResponse(genResponseStateInfo(response, 3, "user not in project"))
+
+        try:
+            local_path = Repo.objects.get(remote_path=remote_path).local_path
+            cmd = "cd \"" + local_path + "\" && git diff main " + source_branch
+            diff_output = os.popen(cmd).read()
+        except Exception:
+            return JsonResponse(genResponseStateInfo(response, 4, "os.popen Error"))
+
+        genResponseStateInfo(response, 0, "git diff success")
+        response['diff_output'] = diff_output
+        return JsonResponse(response)

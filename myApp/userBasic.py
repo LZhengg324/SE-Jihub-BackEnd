@@ -115,6 +115,8 @@ def login(request):
     for up in UserProject.objects.filter(user_id = user.id):
         project = Project.objects.filter(id = int(up.project_id.id)).first()
         projects.append({'id': project.id, 'name': project.name})
+    first_login = user.last_login_ip is None
+    print("First Login : " + str(first_login))
     user.last_login_time = datetime.datetime.now()
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     if x_forwarded_for:
@@ -132,6 +134,7 @@ def login(request):
             'projects': projects,
             'status': user.status,
             'topic': user.color,
+            'first_login': first_login,
         }
     )
 

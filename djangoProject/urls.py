@@ -119,7 +119,8 @@ urlpatterns = [
     path('api/plan/getEmail', userPlan.getEmail.as_view()),
     path('api/ai/UnitTest', AI.UnitTest),
     path('api/ai/CodeReview', AI.CodeReview),
-    path('api/ai/CommitMessageGen', AI.CommitMessageGen),
+    path('api/ai/PrDescriptionGen', AI.PrDescriptionGen),
+    path('api/ai/LabelGenerate', AI.LabelGenerate),
 
     path('api/plan/showContribute',userPlan.showContribute.as_view()),
     path('api/plan/changeOrder',userPlan.changeOrder.as_view()),

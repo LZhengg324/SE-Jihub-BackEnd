@@ -581,8 +581,16 @@ class addMember(View):
 
         if User.objects.filter(name=nameOrEmail).count() > 0:
             peopleId = User.objects.get(name=nameOrEmail).id
+            role = User.objects.get(name=nameOrEmail).status
         else:
             peopleId = User.objects.get(email=nameOrEmail).id
+            role = User.objects.get(email=nameOrEmail).status
+
+        if role is User.ADMIN or role is User.ASSISTANT:
+            response['errcode'] = 4
+            response['message'] = "this user is not allowed to add into any project"
+            response['data'] = None
+            return JsonResponse(response)
 
         if UserProject.objects.filter(user_id_id=peopleId, project_id_id=projectId).count() != 0:
             response['errcode'] = 2
