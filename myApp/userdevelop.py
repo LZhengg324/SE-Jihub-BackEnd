@@ -671,7 +671,7 @@ class GetDiff(View):
                 parentTask = Task.objects.get(id=task.parent_id_id)
                 tasks_info += f"冲刺: {parentTask.name}  ---  子任务: {task.name}\n"
             result = subprocess.run(['gh', 'pr', 'view', str(ghpr_id), '--json', 'title,body'], cwd=local_path,
-                                    capture_output=True, text=True)
+                                    capture_output=True, text=True, encoding="utf-8")
             print(result)
             if result.returncode == 0:
                 pr_info = json.loads(result.stdout)
@@ -711,8 +711,8 @@ class ApprovePullRequest(View):
         repo = Repo.objects.get(id=repo_id)
         projectLinkPr = ProjectLinkPr.objects.get(ghpr_id=ghpr_id, repo_id=repo)
         project = Project.objects.get(id=projectLinkPr.project_id_id)
-        print("Repo : " + str(repo.id))
-        print("Project : " + str(project.id))
+        # print("Repo : " + str(repo.id))
+        # print("Project : " + str(project.id))
         try:
             local_path = repo.local_path
             command = (
@@ -721,7 +721,7 @@ class ApprovePullRequest(View):
                 .format(local_path, ghpr_id)
             )
             result = subprocess.run(command, capture_output=True, shell=True, text=True)
-            print(result)
+            # print(result)
             if result.returncode == 0:
                 tasks_link = Task.objects.filter(link_pr=projectLinkPr)
                 for task in tasks_link:
@@ -773,18 +773,18 @@ class ClosePullRequest(View):
         repo = Repo.objects.get(id=repo_id)
         projectLinkPr = ProjectLinkPr.objects.get(ghpr_id=ghpr_id, repo_id=repo)
         project = Project.objects.get(id=projectLinkPr.project_id_id)
-        print("Repo : " + str(repo.id))
-        print("Project : " + str(project.id))
+        # print("Repo : " + str(repo.id))
+        # print("Project : " + str(project.id))
         try:
             local_path = repo.local_path
-            print(local_path)
+            # print(local_path)
             command = (
                 'cd \"{}\" &&'
                 'gh pr close "{}"'
                 .format(local_path, ghpr_id)
             )
             result = subprocess.run(command, capture_output=True, shell=True, text=True)
-            print(result)
+            # print(result)
             if result.returncode == 0:
                 tasks_link = Task.objects.filter(link_pr=projectLinkPr)
                 for task in tasks_link:
@@ -822,8 +822,8 @@ class CreateRepo(View):
         project_id = kwargs.get('project_id')
         remote_path = str(kwargs.get('remote_path'))
         local_path = os.path.join(USER_REPOS_DIR, name)
-        print("local_path : " + local_path)
-        print("remote_path : " + remote_path)
+        # print("local_path : " + local_path)
+        # print("remote_path : " + remote_path)
         if user_id == None or remote_path == None or project_id == None:
             return JsonResponse(genResponseStateInfo(response, 1, "Null User_id/Remote_path/Project_id"))
 
@@ -833,9 +833,9 @@ class CreateRepo(View):
         if not isUserInProject(user_id, project_id):
             return JsonResponse(genResponseStateInfo(response, 3, "user not in project"))
         try:
-            print("gh repo create " + name + "_" + str(project_id) + " --public")
+            # print("gh repo create " + name + "_" + str(project_id) + " --public")
             os.system("gh repo create " + name + "_" + str(project_id) + " --public")
-            print("---------------")
+            # print("---------------")
             original_directory = os.getcwd()
 
             # 改变当前工作目录到repoTemp
@@ -848,7 +848,7 @@ class CreateRepo(View):
                  + "git commit -m \"first commit\" && " + "git branch -M main && " \
                  + "git remote add origin " + remote_path + name + "_" + str(project_id) + ".git && " \
                  + "git push -u origin main"
-            print(op)
+            # print(op)
             os.system(op)
 
             # cmd = "gh repo view Jihub2024/" + name + "_" + str(project_id) + " --json sshUrl"
@@ -922,7 +922,7 @@ class GetActivations(View):
                 id = task.id
 
                 user_id = UserTask.objects.get(task_id=id).user_id.id
-                print(type(user_id))
+                # print(type(user_id))
                 if user_id in response["data"]:
                     response["data"][user_id] += task.contribute_level
                 else:
@@ -951,7 +951,7 @@ class checkIsCollaborator(View):
                    '/repos/{}/collaborators/{}'
                    .format(repo.remote_path, username))
             result = subprocess.run(cmd, capture_output=True, shell=True, text=True)
-            print(result)
+            # print(result)
             if result.returncode == 0:
                 genResponseStateInfo(response, 0, "You are a collaborator in the repository")
             else:
@@ -980,7 +980,7 @@ class inviteCollaborator(View):
                    '/repos/{}/collaborators/{} '
                    .format(repo.remote_path, username))
             result = subprocess.run(cmd, capture_output=True, shell=True, text=True)
-            print(result)
+            # print(result)
             if result.returncode == 0:
                 genResponseStateInfo(response, 0, "Invitation sent successfully")
             else:
@@ -1080,7 +1080,7 @@ class MarkTaskSolved(View):
         return JsonResponse(genResponseStateInfo(response, 0, "mark task as solved"))
 
 class GetDiff2(View):
-    def get(self, request):
+    def post(self, request):
         DBG("---- in " + sys._getframe().f_code.co_name + " ----")
         response = {'message': "404 not success", "errorcode": -1}
         try:
