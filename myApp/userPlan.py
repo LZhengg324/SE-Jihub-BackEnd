@@ -541,7 +541,7 @@ class modifyRole(View):
             response['data'] = None
             return JsonResponse(response)
 
-        if UserProject.objects.filter(user_id=request.user, project_id_id=projectId,
+        if UserProject.objects.filter(user_id=request.user , project_id_id=projectId,
                                       role=UserProject.NORMAL).count() > 0:
             response['errcode'] = 3
             response['message'] = "user not admin"
@@ -598,8 +598,9 @@ class addMember(View):
             response['data'] = None
             return JsonResponse(response)
 
-        if UserProject.objects.filter(user_id=request.user, project_id_id=projectId,
-                                      role=UserProject.NORMAL).count() > 0:
+
+        if not UserProject.objects.filter(user_id=request.user.id, project_id_id=projectId,
+                                      role=UserProject.DEVELOPER).exists():
             response['errcode'] = 3
             response['message'] = "user not admin"
             response['data'] = None
@@ -640,7 +641,7 @@ class removeMember(View):
             response['data'] = None
             return JsonResponse(response)
 
-        if not UserProject.objects.filter(user_id=request.user, project_id_id=projectId, role=UserProject.ADMIN).exists:
+        if not UserProject.objects.filter(user_id=request.user.id, project_id_id=projectId, role=UserProject.DEVELOPER).exists():
             response['errcode'] = 3
             response['message'] = "user not admin"
             response['data'] = None
