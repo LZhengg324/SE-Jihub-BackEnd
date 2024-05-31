@@ -757,7 +757,7 @@ class showNoticeList(View):
                 sub_tmp["ghpr_id"] = projectLinkPr.ghpr_id
                 sub_tmp["remote_path"] = repo.remote_path
                 sub_tmp["pr"] = serialize('json', [projectLinkPr])
-                print(serialize('json', [projectLinkPr]))
+                # print(serialize('json', [projectLinkPr]))
             data.append(sub_tmp)
 
         response['errcode'] = 0
