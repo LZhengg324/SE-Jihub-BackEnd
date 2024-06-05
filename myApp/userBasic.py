@@ -118,11 +118,12 @@ def login(request):
     first_login = user.last_login_ip is None
     print("First Login : " + str(first_login))
     user.last_login_time = datetime.datetime.now()
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        user.last_login_ip = x_forwarded_for.split(',')[0]  # 所以这里是真实的ip
-    else:
-        user.last_login_ip = request.META.get('REMOTE_ADDR')  # 这里获得代理ip
+    # x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    # if x_forwarded_for:
+    #     user.last_login_ip = x_forwarded_for.split(',')[0]  # 所以这里是真实的ip
+    # else:
+    #     user.last_login_ip = request.META.get('REMOTE_ADDR')  # 这里获得代理ip
+    user.last_login_ip = kwargs.get("ip")
     user.save()
     return response_json(
         errcode = Success,
