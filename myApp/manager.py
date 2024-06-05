@@ -1,5 +1,7 @@
+import datetime
 import struct
 
+import pytz
 from django.http import JsonResponse, HttpResponse
 from django.core import serializers
 from django.views import View
@@ -247,9 +249,10 @@ class ShowUsersLogin(View):
     loginMessages = []
     allUsers = User.objects.all()
     for user in allUsers:
+      time = user.last_login_time + datetime.timedelta(hours=8)
       loginMessages.append({"name" : user.name, 
                             "email" : user.email, 
-                            "loginTime" : user.last_login_time,
+                            "loginTime" : time,
                             "IP" : user.last_login_ip,
                           })
       

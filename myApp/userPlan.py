@@ -198,11 +198,11 @@ class addSubTask(View):
         belongTask = kwargs.get("fatherTaskId", -1)
         managerId = kwargs.get("managerId", -1)
         t = kwargs.get("start_time", "")
-        print(time)
         y, m, d = t.split("-")
         y = int(y)
         m = int(m)
         d = int(d)
+        labels = kwargs.get("labels")
 
         if Project.objects.filter(id=projectId).count() == 0:
             response['errcode'] = 1
@@ -226,10 +226,16 @@ class addSubTask(View):
             return JsonResponse(response)
 
         # use time[0] as year time[1] as month time[2] as day
+        ss = ""
+        for i, label in enumerate(labels):
+            ss = ss + label
+            if i < len(labels) - 1:
+                ss += ";&;"
+        ss = ss + "#@#" + description
         deadline = datetime.datetime(year=year, month=month, day=day, tzinfo=pytz.utc)
         startTime = datetime.datetime(year=y, month=m, day=d, tzinfo=pytz.utc)
         task = Task.objects.create(name=name, deadline=deadline, contribute_level=contribute, project_id_id=projectId,
-                                   parent_id_id=belongTask, start_time=startTime, description=description)
+                                   parent_id_id=belongTask, start_time=startTime, description=ss)
         task.status = Task.NOTSTART
         task.save()
 
@@ -266,10 +272,13 @@ class showTaskList(View):
             subTasks = Task.objects.filter(parent_id=i)
             subTaskList = []
             for j in subTasks:
+                ss = j.description
+                labels_tmp, description = ss.split("#@#")
+                labels = labels_tmp.split(";&;")
                 sub_tmp = {"deadline": j.deadline, "contribute": j.contribute_level,
                            "intro": j.outline, 'managerId': UserTask.objects.get(task_id=j).user_id_id,
                            "subTaskName": j.name, "subTaskId": j.id, "start_time": j.start_time,
-                           "complete_time": j.complete_time}
+                           "complete_time": j.complete_time, "description": description, "labels": labels}
 
                 if j.status != Task.COMPLETED:
                     if cur_time > j.deadline:

@@ -138,7 +138,7 @@ def LabelGenerate(request):
     text = [
         {"role": "system", "content": "你现在扮演一位秘书"}
     ]
-    Input = "以下是任务的描述，从中提取关键字生成标签，根据格式（标签：...,...,...）输出并用中文逗号隔开\n" + description
+    Input = "以下是任务的描述，从中提取关键字生成标签，直接输出并用中文逗号隔开，若无法提取标签则只输出null\n" + description
     # 这里有一些标签：1 ，2 ，3 ，4
     # 接下来给你一段任务描述，从上面的标签中选5个最合适的，输出标签用英文逗号隔开
     question = checklen(getText(text, "user", Input))
@@ -149,8 +149,8 @@ def LabelGenerate(request):
     pattern = re.compile(r'^标签：')
     tags_without_prefix = [pattern.sub('', tag) for tag in tags]
     tags_without_prefix = [tag.replace(" ", "") for tag in tags_without_prefix]
+    tags_without_prefix = [tag.replace("null", "") for tag in tags_without_prefix]
 
-    print(tags_without_prefix)
     return response_json(
         errcode=0,
         data={

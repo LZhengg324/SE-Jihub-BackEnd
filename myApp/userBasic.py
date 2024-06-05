@@ -1,3 +1,5 @@
+import pytz
+
 from myApp.models import User, UserProject, Project
 from djangoProject.settings import response_json
 import datetime
@@ -116,7 +118,6 @@ def login(request):
         project = Project.objects.filter(id = int(up.project_id.id)).first()
         projects.append({'id': project.id, 'name': project.name})
     first_login = user.last_login_ip is None
-    print("First Login : " + str(first_login))
     user.last_login_time = datetime.datetime.now()
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     if x_forwarded_for:
